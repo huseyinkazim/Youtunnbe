@@ -169,17 +169,25 @@ namespace Business
         {
             int i = 0;
             var doc = new HtmlDocument();
-            WebClient client = new WebClient();
-            string html = client.DownloadString(url);
+           
+            string html = GetUrlResouces(url);
             doc.LoadHtml(html);
             var scripts = doc.DocumentNode.SelectNodes("//script");
-            var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText.Replace(" ", string.Empty);
-            var baslangic = innerText.IndexOf("ytplayer.config=") + 16;
+            var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText;
+            var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
             var bitis = innerText.IndexOf(";ytplayer.load");
             var json = innerText.Substring(baslangic, bitis - baslangic);
 
             return JObject.Parse(json);
 
+        }
+        public static string GetUrlResouces(string url)
+        {
+            using (var client = new WebClient())
+            {
+                client.Encoding = System.Text.Encoding.UTF8;
+                return client.DownloadString(url);
+            }
         }
         public static bool TryNormalizeYoutubeUrl(string url, out string normalizedUrl)
         {
@@ -211,55 +219,7 @@ namespace Business
             return true;
         }
     }
-    public class DownloadManager
-    {
-        public static VideoInfo ChooseVideo(IEnumerable<VideoInfo> videoInfos)
-        {
-            int i = 1, index; bool isRight = false;
-            foreach (var item in videoInfos)
-            {
-                Console.WriteLine(i + ":" + item.ToString());
-                i++;
-            }
-
-            do
-            {
-                Console.WriteLine("Lütfen seçeneklerden birini seçiniz:");
-                var index_text = Console.ReadLine();
-                isRight = Int32.TryParse(index_text, out index);
-                if (isRight)
-                    isRight = index <= i && index > 0;
-            } while (!isRight);
-            VideoInfo video = videoInfos.ToArray()[index - 1];
-            return video;
-        }
-        public static void DownloadVideo(VideoInfo video)
-        {
-            Task.Run(() =>
-         {
-             var filePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Youtube";
-             VideoDownloader videoDownloader;
-             if (video.Resolution != 0)
-                 videoDownloader = new VideoDownloader(video,
-                      Path.Combine(filePath,
-                      RemoveIllegalPathCharacters(video.Title) + "_" + video.Resolution + video.VideoExtension));
-             else
-                 videoDownloader = new VideoDownloader(video,
-                     Path.Combine(filePath,
-                     RemoveIllegalPathCharacters(video.Title) + video.VideoExtension));
-
-             videoDownloader.DownloadProgressChanged += (sender, args) => Console.WriteLine(args.ProgressPercentage);
-
-             videoDownloader.DownloadLinkAsync();
-         });
-        }
-        private static string RemoveIllegalPathCharacters(string path)
-        {
-            string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-            var r = new Regex(string.Format("[{0}]", Regex.Escape(regexSearch)));
-            return r.Replace(path, "");
-        }
-    }
+ 
 
 
 }
