@@ -34,7 +34,7 @@ namespace YoutubeDownloader
                     Console.WriteLine("Beklenmedik bir hata oluştu lütfen bizimle iletişime geçiniz");
 
                 }
-            } while (true);
+            } while (true); 
         }
     }
 }
