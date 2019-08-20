@@ -1,4 +1,5 @@
 ﻿using Entity;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +44,7 @@ namespace Business
         }
         public static Dictionary<string, string> UrlToDictionaryParameters(string link)
         {
-           
+
             if (link.Contains("?"))
             {
                 link = link.Substring(link.IndexOf('?') + 1);
@@ -52,12 +53,12 @@ namespace Business
             foreach (var paremeter in link.Split('&'))
             {
 
-                var baslangic=paremeter.IndexOf("=") + 1;
-               
+                var baslangic = paremeter.IndexOf("=") + 1;
+
 
                 var parameters = paremeter.Split('=');
-               
-                    dictionary.Add(parameters[0], System.Web.HttpUtility.UrlDecode(paremeter.Substring(baslangic)));
+
+                dictionary.Add(parameters[0], System.Web.HttpUtility.UrlDecode(paremeter.Substring(baslangic)));
             }
             return dictionary;
         }
@@ -86,8 +87,115 @@ namespace Business
         }
         public static string Decrypt(string chiper, string jsPath)
         {
-            return encodeURIComponent(DecryptEncryptedSignature(decodeURIComponent(chiper),  jsPath));
+            return encodeURIComponent(DecryptEncryptedSignature_v2(decodeURIComponent(chiper), jsPath));
         }
+
+        public static string DecryptEncryptedSignature_v2(string cipher, string jsPath)
+        {
+            string jsUrl = string.Format($"https://s.ytimg.com{jsPath}");
+
+            string js = GetUrlResouces(jsUrl);
+
+            var all = js.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var s = all.FirstOrDefault(i => i.Contains("join(\"\")") && i.Contains("split(\"\")"));
+
+            Action<string> spliceOperation = (parameter) =>
+               {
+                   int value;
+                   if (!Int32.TryParse(parameter, out value))
+                       throw new Exception("Splice işlemi sırasında beklenmedik bir hata oluştu.");
+
+                   cipher = cipher.Substring(value);
+
+               };
+            Action reverseOperation = () =>
+             {
+                 char[] charArray = cipher.ToCharArray();
+                 Array.Reverse(charArray);
+                 cipher = new string(charArray);
+             };
+
+            Action<string> swapOperation = (parameter) =>
+            {
+                int value;
+                if (!Int32.TryParse(parameter, out value))
+                    throw new Exception("Swap işlemi sırasında beklenmedik bir hata oluştu.");
+                var cipherArray = cipher.ToCharArray();
+                char temp = cipherArray[0];
+                cipherArray[0] = cipherArray[value % cipher.Length];
+                cipherArray[value % cipher.Length] = temp;
+                cipher = new string(cipherArray);
+
+            };
+            string reverse = string.Empty, splice = string.Empty, swap = string.Empty;
+            string reverseFinder = "reverse", spliceFinder = "splice", swapFinder = "a[0]=a[b";
+            foreach (var line in s.Split(';'))
+            {
+
+                var functionName = GetFunctionFromLine(line);
+                var sprit = line.Split(new char[] { '.', '(' });
+
+                if (string.IsNullOrEmpty(line) || line.Contains("split") || line.Contains("join"))
+                    continue;
+
+                var test = all.Where(i => i.Contains($"{sprit[1]}:function"));
+                if (string.IsNullOrEmpty(reverse))
+                {
+                    if (test.Count(i => i.Contains(reverseFinder)) != 0)
+                    {
+                        reverse = sprit[1];
+                        reverseOperation();
+                    }
+                }
+                //else
+                //    throw new Exception("İmza oluşturulurken beklenmedik hata ile karşılaşıldı");
+                else if (reverse == sprit[1])
+                    reverseOperation();
+
+
+                if (string.IsNullOrEmpty(splice))
+                {
+                    if (test.Count(i => i.Contains(spliceFinder)) != 0)
+                    {
+                        splice = sprit[1];
+                        var parameter = sprit[2].Split(new char[] { ',', ')' },StringSplitOptions.RemoveEmptyEntries);
+
+                        spliceOperation(parameter[1]);
+                    }
+                }
+                //else
+                //    throw new Exception("İmza oluşturulurken beklenmedik hata ile karşılaşıldı");
+                else if (splice == sprit[1])
+                {
+                    var parameter = sprit[2].Split(new char[] { ',', ')' }, StringSplitOptions.RemoveEmptyEntries);
+                    spliceOperation(parameter[1]);
+                }
+                if (string.IsNullOrEmpty(swap))
+                {
+                    if (test.Count(i => i.Contains(swapFinder)) != 0)
+                    {
+                        swap = sprit[1];
+                        var parameter = sprit[2].Split(new char[] { ',', ')' }, StringSplitOptions.RemoveEmptyEntries);
+                        swapOperation(parameter[1]);
+                    }
+                    //else
+                    //    throw new Exception("İmza oluşturulurken beklenmedik hata ile karşılaşıldı");
+                }
+                else if (swap == sprit[1])
+                {
+                    var parameter = sprit[2].Split(new char[] { ',', ')' }, StringSplitOptions.RemoveEmptyEntries);
+                    swapOperation(parameter[1]);
+                }
+
+
+
+            }
+
+
+
+            return cipher;
+        }
+
         public static string DecryptEncryptedSignature(string cipher, string jsPath)
         {
             string jsUrl = string.Format($"https://s.ytimg.com{jsPath}");
@@ -127,17 +235,17 @@ namespace Business
                 string reSlice = string.Format(@"{0}:\bfunction\b\([a],b\).(\breturn\b)?.?\w+\.", functionIdentifier); //Regex for slice (return or not)
                 string reSwap = string.Format(@"{0}:\bfunction\b\(\w+\,\w\).\bvar\b.\bc=a\b", functionIdentifier); //Regex for the char swap.
 
-                if (Regex.Match(js, reReverse).Success&&string.IsNullOrEmpty(idReverse))
+                if (Regex.Match(js, reReverse).Success && string.IsNullOrEmpty(idReverse))
                 {
                     idReverse = functionIdentifier; //If def matched the regex for reverse then the current function is a defined as the reverse
                 }
 
-                if (Regex.Match(js, reSlice).Success&&string.IsNullOrEmpty(idSlice))
+                if (Regex.Match(js, reSlice).Success && string.IsNullOrEmpty(idSlice))
                 {
                     idSlice = functionIdentifier; //If def matched the regex for slice then the current function is defined as the slice.
                 }
 
-                if (Regex.Match(js, reSwap).Success&&string.IsNullOrEmpty(idCharSwap))
+                if (Regex.Match(js, reSwap).Success && string.IsNullOrEmpty(idCharSwap))
                 {
                     idCharSwap = functionIdentifier; //If def matched the regex for charSwap then the current function is defined as swap.
                 }
