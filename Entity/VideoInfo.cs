@@ -54,6 +54,7 @@ namespace Entity
         public int AudioBitrate { get; private set; }
         public AdaptiveType AdaptiveType { get; private set; }
         public string Title { get; set; }
+        public string YoutubeLinkId{ get; set; }
 
         public string VideoExtension
         {

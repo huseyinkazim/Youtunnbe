@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Business
 {
-    public class Process
+    public class Process : IProcess
     {
-        public static string ReplaceUrlParameterValue(string currentPageUrl, string paramToReplace, string newValue)
+        private  string ReplaceUrlParameterValue(string currentPageUrl, string paramToReplace, string newValue)
         {
             var query = UrlToDictionaryParameters(currentPageUrl);
 
@@ -41,7 +41,7 @@ namespace Business
 
             return uriBuilder.ToString();
         }
-        public static Dictionary<string, string> UrlToDictionaryParameters(string link)
+        public Dictionary<string, string> UrlToDictionaryParameters(string link)
         {
            
             if (link.Contains("?"))
@@ -61,7 +61,7 @@ namespace Business
             }
             return dictionary;
         }
-        public static string GetUrlResouces(string url)
+        private  string GetUrlResouces(string url)
         {
             using (var client = new WebClient())
             {
@@ -69,27 +69,27 @@ namespace Business
                 return client.DownloadString(url);
             }
         }
-        private static string GetFunctionFromLine(string currentLine)
+        private  string GetFunctionFromLine(string currentLine)
         {
             Regex matchFunctionReg = new Regex(@"\w+\.(?<functionID>\w+)\("); //lc.ac(b,c) want the ac part.
             Match rgMatch = matchFunctionReg.Match(currentLine);
             string matchedFunction = rgMatch.Groups["functionID"].Value;
             return matchedFunction; //return 'ac'
         }
-        public static string decodeURIComponent(string chiper)
+        private  string decodeURIComponent(string chiper)
         {
             return System.Web.HttpUtility.HtmlDecode(chiper);
         }
-        public static string encodeURIComponent(string chiper)
+        private string encodeURIComponent(string chiper)
         {
             return System.Web.HttpUtility.HtmlEncode(chiper);
         }
-        public static string Decrypt(string chiper, string jsPath)
+        public string Decrypt(string chiper, string jsPath)
         {
             return encodeURIComponent(DecryptEncryptedSignature_v2(decodeURIComponent(chiper), jsPath));
         }
 
-        public static string DecryptEncryptedSignature_v2(string cipher, string jsPath)
+        private  string DecryptEncryptedSignature_v2(string cipher, string jsPath)
         {
             string jsUrl = string.Format($"https://s.ytimg.com{jsPath}");
 
@@ -195,7 +195,7 @@ namespace Business
             return cipher;
         }
 
-        public static string DecryptEncryptedSignature(string cipher, string jsPath)
+        private string DecryptEncryptedSignature(string cipher, string jsPath)
         {
             string jsUrl = string.Format($"https://s.ytimg.com{jsPath}");
 
@@ -276,12 +276,12 @@ namespace Business
 
             return DecipherWithOperations(cipher, operations);
         }
-        private static string DecipherWithOperations(string cipher, string operations)
+        private string DecipherWithOperations(string cipher, string operations)
         {
             return operations.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries)
                 .Aggregate(cipher, ApplyOperation);
         }
-        private static string ApplyOperation(string cipher, string op)
+        private string ApplyOperation(string cipher, string op)
         {
             switch (op[0])
             {
@@ -304,14 +304,14 @@ namespace Business
                     throw new NotImplementedException("Couldn't find cipher operation.");
             }
         }
-        private static int GetOpIndex(string op)
+        private int GetOpIndex(string op)
         {
             string parsed = new Regex(@".(\d+)").Match(op).Result("$1");
             int index = Int32.Parse(parsed);
 
             return index;
         }
-        private static string SwapFirstChar(string cipher, int index)
+        private string SwapFirstChar(string cipher, int index)
         {
             var builder = new StringBuilder(cipher);
             builder[0] = cipher[index];

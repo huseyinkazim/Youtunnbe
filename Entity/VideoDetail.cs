@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,5 +38,14 @@ namespace Entity
         public bool isPrivate { get; set; }
         public bool isUnpluggedCorpus { get; set; }
         public bool isLiveContent { get; set; }
+    }
+
+    public class VideoDownloadParameter
+    {
+        public JObject json { set; get; }
+        public string videoTitle { set; get; }
+        public string jsPath { set; get; }
+        public string[] splitByUrls { set; get; }
+        public string youtubeLinkId { set; get; }
     }
 }

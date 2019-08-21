@@ -14,27 +14,24 @@ using System.Threading.Tasks;
 
 namespace Business
 {
-    public class YoutubeManager
+    public class YoutubeManager : IYoutubeManager
     {
-        public static string Signature1 = "sig";
-        public static string Signature2 = "s";
-        public static IEnumerable<VideoInfo> YoutubeMediaUrls(string YoutubeUrl)
+        public const string Signature1 = "sig";
+        public const string Signature2 = "s";
+        public Process process = new Process();
+        public IEnumerable<VideoInfo> YoutubeMediaUrls(string YoutubeUrl)
         {
 
-            string videoUrl;
+            string videoUrl, VideoId;
             if (YoutubeUrl == null)
                 throw new ArgumentNullException("videoUrl");
-            bool isYoutubeUrl = TryNormalizeYoutubeUrl(YoutubeUrl, out videoUrl);
+            bool isYoutubeUrl = TryNormalizeYoutubeUrl(YoutubeUrl, out VideoId);
             if (!isYoutubeUrl)
             {
                 throw new ArgumentException("URL is not a valid youtube URL!");
             }
-
+            videoUrl = "http://youtube.com/watch?v=" + VideoId;
             var json = LoadJson(videoUrl);
-
-
-
-            string videoTitle = GetVideoTitle(json);
 
             string path = GetVideoBaseJsPath(json);
             if (string.IsNullOrEmpty(path))
@@ -42,14 +39,25 @@ namespace Business
 
             var splitByUrls = GetStreamMap(json);
             var adaptiveFmtSplitByUrls = GetAdaptiveStreamMap(json);
-             splitByUrls.AddRange(adaptiveFmtSplitByUrls);
+            splitByUrls.AddRange(adaptiveFmtSplitByUrls);
 
-            return GetDownloadUrls(json, videoTitle: videoTitle, jsPath: path, splitByUrls: splitByUrls.ToArray()).ToList();
+
+            var parameter = new VideoDownloadParameter
+            {
+                json = json,
+                videoTitle = GetVideoTitle(json),
+                jsPath = path,
+                splitByUrls = splitByUrls.ToArray(),
+                youtubeLinkId = VideoId
+            };
+
+
+            return GetDownloadUrls(parameter).ToList();
 
 
         }
 
-        private static string GetVideoTitle(JObject json)
+        private string GetVideoTitle(JObject json)
         {
             JToken title = json["args"]["title"];
             var player_response = JObject.Parse(System.Web.HttpUtility.UrlDecode(json["args"]["player_response"].ToString()));
@@ -57,7 +65,7 @@ namespace Business
 
             return string.IsNullOrEmpty(videoDetails.title) ? "videoPlayback" : videoDetails.title;
         }
-        private static List<string> GetStreamMap(JObject json)
+        private List<string> GetStreamMap(JObject json)
         {
             JToken streamMap = json["args"]["url_encoded_fmt_stream_map"];
 
@@ -70,7 +78,7 @@ namespace Business
 
             return streamMapString.Split(',').ToList();
         }
-        private static List<string> GetAdaptiveStreamMap(JObject json)
+        private List<string> GetAdaptiveStreamMap(JObject json)
         {
             JToken streamMap = json["args"]["adaptive_fmts"];
 
@@ -79,20 +87,20 @@ namespace Business
                 streamMap = json["args"]["url_encoded_fmt_stream_map"];
             }
             var result = streamMap.ToString();
-            var s = result.Split(',').Where(i => Cache.Defaults.FirstOrDefault(j => j.FormatCode.ToString() == Process.UrlToDictionaryParameters(i)["itag"].ToString()) != null &&
-              Cache.Defaults.FirstOrDefault(j => j.FormatCode.ToString() == Process.UrlToDictionaryParameters(i)["itag"].ToString()).AudioBitrate != 0).ToList();
+            var s = result.Split(',').Where(i => Cache.Defaults.FirstOrDefault(j => j.FormatCode.ToString() == process.UrlToDictionaryParameters(i)["itag"].ToString()) != null &&
+              Cache.Defaults.FirstOrDefault(j => j.FormatCode.ToString() == process.UrlToDictionaryParameters(i)["itag"].ToString()).AudioBitrate != 0).ToList();
             return s;
         }
 
-        private static IEnumerable<VideoInfo> GetDownloadUrls(JObject json, string videoTitle, string jsPath, string[] splitByUrls)
+        private IEnumerable<VideoInfo> GetDownloadUrls(VideoDownloadParameter model)
         {
             List<VideoInfo> liste = new List<VideoInfo>();
 
 
             string signature = string.Empty;
-            foreach (string s in splitByUrls)
+            foreach (string s in model.splitByUrls)
             {
-                IDictionary<string, string> queries = Process.UrlToDictionaryParameters(s);
+                IDictionary<string, string> queries = process.UrlToDictionaryParameters(s);
                 string url;
 
                 string itag;
@@ -109,10 +117,9 @@ namespace Business
                     continue;
                 if (queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
                 {
-                    // requiresDecryption = queries.ContainsKey(Signature1) || queries.ContainsKey(Signature2);
 
                     string encryptSignature = queries.ContainsKey(Signature2) ? queries[Signature2] : queries[Signature1];
-                    signature = Process.Decrypt(encryptSignature, jsPath);
+                    signature = process.Decrypt(encryptSignature, model.jsPath);
 
                     url = string.Format("{0}&{1}={2}", queries["url"], Signature1, signature);
 
@@ -127,23 +134,14 @@ namespace Business
                 }
 
 
-                IDictionary<string, string> parameters = Process.UrlToDictionaryParameters(url);
+                IDictionary<string, string> parameters = process.UrlToDictionaryParameters(url);
 
                 if (!parameters.ContainsKey("ratebypass"))
                     url += string.Format("&{0}={1}", "ratebypass", "yes");
 
-                if (videoInfo.FormatCode != 0)
-                {
-                    videoInfo.DownloadUrl = url;
-                    videoInfo.Title = videoTitle;
-
-                    // videoInfo.RequiresDecryption = requiresDecryption;
-                }
-                else
-                {
-                    videoInfo.Title = videoTitle;
-                    videoInfo.DownloadUrl = url;
-                }
+                videoInfo.DownloadUrl = url;
+                videoInfo.Title = model.videoTitle;
+                videoInfo.YoutubeLinkId = model.youtubeLinkId;
 
                 yield return videoInfo;
                 // liste.Add(videoInfo);
@@ -154,22 +152,22 @@ namespace Business
 
         }
 
-        private static string GetVideoBaseJsPath(JObject json)
+        private string GetVideoBaseJsPath(JObject json)
         {
             JToken js = json["assets"]["js"];
             return js == null ? String.Empty : js.ToString();
         }
-        private static bool IsVideoUnavailable(string pageSource)
+        private bool IsVideoUnavailable(string pageSource)
         {
             const string unavailableContainer = "<div id=\"watch-player-unavailable\">";
 
             return pageSource.Contains(unavailableContainer);
         }
-        private static JObject LoadJson(string url)
+        private JObject LoadJson(string url)
         {
             int i = 0;
             var doc = new HtmlDocument();
-           
+
             string html = GetUrlResouces(url);
             doc.LoadHtml(html);
             var scripts = doc.DocumentNode.SelectNodes("//script");
@@ -181,7 +179,7 @@ namespace Business
             return JObject.Parse(json);
 
         }
-        public static string GetUrlResouces(string url)
+        private string GetUrlResouces(string url)
         {
             using (var client = new WebClient())
             {
@@ -189,7 +187,7 @@ namespace Business
                 return client.DownloadString(url);
             }
         }
-        public static bool TryNormalizeYoutubeUrl(string url, out string normalizedUrl)
+        private bool TryNormalizeYoutubeUrl(string url, out string UrlId)
         {
             url = url.Trim();
 
@@ -204,22 +202,21 @@ namespace Business
 
             url = url.Replace("/watch#", "/watch?");
 
-            IDictionary<string, string> query = Process.UrlToDictionaryParameters(url);
+            IDictionary<string, string> query = process.UrlToDictionaryParameters(url);
 
             string v;
 
             if (!query.TryGetValue("v", out v))
             {
-                normalizedUrl = null;
+                UrlId = null;
                 return false;
             }
-
-            normalizedUrl = "http://youtube.com/watch?v=" + v;
+            UrlId = v;
 
             return true;
         }
     }
- 
+
 
 
 }
