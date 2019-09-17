@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 
 namespace Entity
 {
-    public class Thumbnail2
+    public class Thumbnaill2
     {
         public string url { get; set; }
         public int width { get; set; }
         public int height { get; set; }
     }
 
-    public class Thumbnail
+    public class Thumbnaill
     {
-        public List<Thumbnail2> thumbnails { get; set; }
+        public List<Thumbnaill2> thumbnails { get; set; }
     }
 
     public class VideoDetail
@@ -29,7 +29,7 @@ namespace Entity
         public bool isOwnerViewing { get; set; }
         public string shortDescription { get; set; }
         public bool isCrawlable { get; set; }
-        public Thumbnail thumbnail { get; set; }
+        public Thumbnaill thumbnail { get; set; }
         public bool useCipher { get; set; }
         public double averageRating { get; set; }
         public bool allowRatings { get; set; }

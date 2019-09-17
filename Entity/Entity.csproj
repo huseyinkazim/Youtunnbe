@@ -47,7 +47,9 @@
     <Compile Include="VideoDetail.cs" />
     <Compile Include="VideoInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="YoutubeLinkModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Ytplayer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

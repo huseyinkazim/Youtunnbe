@@ -31,9 +31,15 @@ namespace Business
                 throw new ArgumentException("URL is not a valid youtube URL!");
             }
             videoUrl = "http://youtube.com/watch?v=" + VideoId;
-            var json = LoadJson(videoUrl);
+            JObject json;
+            Ytplyer playerModel;
 
+            var tuple = LoadJson(videoUrl);
+            json = tuple.Item1;
+            playerModel = tuple.Item2;
+            var allStream = MapToList<Format, AdaptiveFormat>(playerModel.args.responseModel.streamingData.formats, playerModel.args.responseModel.streamingData.adaptiveFormats);
             string path = GetVideoBaseJsPath(json);
+            //redirector.googlevideo.com
             if (string.IsNullOrEmpty(path))
                 throw new Exception("Beklenmedik bir hata oluştu");
 
@@ -57,6 +63,33 @@ namespace Business
 
         }
 
+        private L MapTo<T,L>(T from)
+        {
+            var fromType = typeof(T);
+            var toType= typeof(L);
+
+            var toModel=Activator.CreateInstance(toType);
+
+            foreach(var prop in fromType.GetProperties())
+            {
+                var obj = prop.GetValue(from);
+                toType.GetProperty(prop.Name).SetValue(toModel,obj);
+            }
+
+            return (L)toModel;
+
+        }
+        private List<L> MapToList<T, L>(List<T> from,List<L> ListModel)
+        {
+            //var ListModel =(List<L>)Activator.CreateInstance(typeof(List<L>));
+            foreach(var item in from)
+            {
+                ListModel.Add(MapTo<T, L>(item));
+            }
+
+
+            return ListModel;
+        }
         private string GetVideoTitle(JObject json)
         {
             JToken title = json["args"]["title"];
@@ -163,7 +196,7 @@ namespace Business
 
             return pageSource.Contains(unavailableContainer);
         }
-        private JObject LoadJson(string url)
+        private Tuple<JObject,Ytplyer> LoadJson(string url)
         {
             int i = 0;
             var doc = new HtmlDocument();
@@ -175,10 +208,20 @@ namespace Business
             var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
             var bitis = innerText.IndexOf(";ytplayer.load");
             var json = innerText.Substring(baslangic, bitis - baslangic);
-
-            return JObject.Parse(json);
+           
+            var model = JsonConvert.DeserializeObject<Ytplyer>(json);
+            var decoded = urldecode(model.args.player_response);
+          
+            model.args.responseModel =JsonConvert.DeserializeObject<PlayerResponse>(decoded);
+            //var s=response.streamingData.formats.FirstOrDefault().cipher;
+            return new Tuple<JObject, Ytplyer>(JObject.Parse(json),model);
 
         }
+        private string urldecode(string source) => System.Web.HttpUtility.UrlDecode(System.Web.HttpUtility.UrlDecode(source)).Replace(@"\u0026", @"&");
+
+
+
+
         private string GetUrlResouces(string url)
         {
             using (var client = new WebClient())
