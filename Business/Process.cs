@@ -11,7 +11,7 @@ namespace Business
 {
     public class Process : IProcess
     {
-        private  string ReplaceUrlParameterValue(string currentPageUrl, string paramToReplace, string newValue)
+        private string ReplaceUrlParameterValue(string currentPageUrl, string paramToReplace, string newValue)
         {
             var query = UrlToDictionaryParameters(currentPageUrl);
 
@@ -41,27 +41,27 @@ namespace Business
 
             return uriBuilder.ToString();
         }
-        public Dictionary<string, string> UrlToDictionaryParameters(string link)
+        public Dictionary<string, string> UrlToDictionaryParameters(string link, bool isContainsControl = true)
         {
-           
-            if (link.Contains("?"))
+
+            if (link.Contains("?") && isContainsControl)
             {
                 link = link.Substring(link.IndexOf('?') + 1);
             }
             var dictionary = new Dictionary<string, string>();
-            foreach (var paremeter in link.Split('&'))
+            foreach (var paremeter in link.Split('&','?'))
             {
 
-                var baslangic=paremeter.IndexOf("=") + 1;
-               
+                var baslangic = paremeter.IndexOf("=") + 1;
+
 
                 var parameters = paremeter.Split('=');
-               
-                    dictionary.Add(parameters[0], System.Web.HttpUtility.UrlDecode(paremeter.Substring(baslangic)));
+
+                dictionary.Add(parameters[0], System.Web.HttpUtility.UrlDecode(paremeter.Substring(baslangic)));
             }
             return dictionary;
         }
-        private  string GetUrlResouces(string url)
+        private string GetUrlResouces(string url)
         {
             using (var client = new WebClient())
             {
@@ -69,14 +69,14 @@ namespace Business
                 return client.DownloadString(url);
             }
         }
-        private  string GetFunctionFromLine(string currentLine)
+        private string GetFunctionFromLine(string currentLine)
         {
             Regex matchFunctionReg = new Regex(@"\w+\.(?<functionID>\w+)\("); //lc.ac(b,c) want the ac part.
             Match rgMatch = matchFunctionReg.Match(currentLine);
             string matchedFunction = rgMatch.Groups["functionID"].Value;
             return matchedFunction; //return 'ac'
         }
-        private  string decodeURIComponent(string chiper)
+        private string decodeURIComponent(string chiper)
         {
             return System.Web.HttpUtility.HtmlDecode(chiper);
         }
@@ -89,7 +89,7 @@ namespace Business
             return encodeURIComponent(DecryptEncryptedSignature_v2(decodeURIComponent(chiper), jsPath));
         }
 
-        private  string DecryptEncryptedSignature_v2(string cipher, string jsPath)
+        private string DecryptEncryptedSignature_v2(string cipher, string jsPath)
         {
             string jsUrl = string.Format($"https://s.ytimg.com{jsPath}");
 
@@ -234,17 +234,17 @@ namespace Business
                 string reSlice = string.Format(@"{0}:\bfunction\b\([a],b\).(\breturn\b)?.?\w+\.", functionIdentifier); //Regex for slice (return or not)
                 string reSwap = string.Format(@"{0}:\bfunction\b\(\w+\,\w\).\bvar\b.\bc=a\b", functionIdentifier); //Regex for the char swap.
 
-                if (Regex.Match(js, reReverse).Success&&string.IsNullOrEmpty(idReverse))
+                if (Regex.Match(js, reReverse).Success && string.IsNullOrEmpty(idReverse))
                 {
                     idReverse = functionIdentifier; //If def matched the regex for reverse then the current function is a defined as the reverse
                 }
 
-                if (Regex.Match(js, reSlice).Success&&string.IsNullOrEmpty(idSlice))
+                if (Regex.Match(js, reSlice).Success && string.IsNullOrEmpty(idSlice))
                 {
                     idSlice = functionIdentifier; //If def matched the regex for slice then the current function is defined as the slice.
                 }
 
-                if (Regex.Match(js, reSwap).Success&&string.IsNullOrEmpty(idCharSwap))
+                if (Regex.Match(js, reSwap).Success && string.IsNullOrEmpty(idCharSwap))
                 {
                     idCharSwap = functionIdentifier; //If def matched the regex for charSwap then the current function is defined as swap.
                 }

@@ -9,6 +9,6 @@ namespace Business
     public interface IProcess
     {
         string Decrypt(string chiper, string jsPath);
-        Dictionary<string, string> UrlToDictionaryParameters(string link);
+        Dictionary<string, string> UrlToDictionaryParameters(string link,bool isContainsControl);
     }
 }

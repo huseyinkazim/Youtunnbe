@@ -48,4 +48,11 @@ namespace Entity
         public string[] splitByUrls { set; get; }
         public string youtubeLinkId { set; get; }
     }
+    public class VideoDownloadParameterv2
+    {
+        public string videoTitle { set; get; }
+        public string jsPath { set; get; }
+        public string youtubeLinkId { set; get; }
+        public List<AdaptiveFormat> AdaptiveFormats { set; get; }
+    }
 }

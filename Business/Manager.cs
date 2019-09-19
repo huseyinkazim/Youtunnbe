@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -18,6 +19,9 @@ namespace Business
     {
         public const string Signature1 = "sig";
         public const string Signature2 = "s";
+        public const string DefaultUrl = "https://redirector.googlevideo.com/videoplayback?";
+
+
         public Process process = new Process();
         public IEnumerable<VideoInfo> YoutubeMediaUrls(string YoutubeUrl)
         {
@@ -46,7 +50,22 @@ namespace Business
             var splitByUrls = GetStreamMap(json);
             var adaptiveFmtSplitByUrls = GetAdaptiveStreamMap(json);
             splitByUrls.AddRange(adaptiveFmtSplitByUrls);
-
+         
+            List<VideoInfo> list = new List<VideoInfo>();
+#if false
+            #region DownloadV2
+            var parameter = new VideoDownloadParameterv2
+            {
+                jsPath = path,
+                videoTitle = GetVideoTitle(json),
+                youtubeLinkId = VideoId,
+                AdaptiveFormats = allStream
+            };
+            list = GetDownloadUrls(parameter).ToList();
+            #endregion
+#endif
+#if true
+            #region DownloadV2
 
             var parameter = new VideoDownloadParameter
             {
@@ -56,33 +75,36 @@ namespace Business
                 splitByUrls = splitByUrls.ToArray(),
                 youtubeLinkId = VideoId
             };
+            list = GetDownloadUrls(parameter).ToList();
+            #endregion
+#endif
 
 
-            return GetDownloadUrls(parameter).ToList();
+            return list;
 
 
         }
 
-        private L MapTo<T,L>(T from)
+        private L MapTo<T, L>(T from)
         {
             var fromType = typeof(T);
-            var toType= typeof(L);
+            var toType = typeof(L);
 
-            var toModel=Activator.CreateInstance(toType);
+            var toModel = Activator.CreateInstance(toType);
 
-            foreach(var prop in fromType.GetProperties())
+            foreach (var prop in fromType.GetProperties())
             {
                 var obj = prop.GetValue(from);
-                toType.GetProperty(prop.Name).SetValue(toModel,obj);
+                toType.GetProperty(prop.Name).SetValue(toModel, obj);
             }
 
             return (L)toModel;
 
         }
-        private List<L> MapToList<T, L>(List<T> from,List<L> ListModel)
+        private List<L> MapToList<T, L>(List<T> from, List<L> ListModel)
         {
             //var ListModel =(List<L>)Activator.CreateInstance(typeof(List<L>));
-            foreach(var item in from)
+            foreach (var item in from)
             {
                 ListModel.Add(MapTo<T, L>(item));
             }
@@ -124,7 +146,72 @@ namespace Business
               Cache.Defaults.FirstOrDefault(j => j.FormatCode.ToString() == process.UrlToDictionaryParameters(i)["itag"].ToString()).AudioBitrate != 0).ToList();
             return s;
         }
+        private IEnumerable<VideoInfo> GetDownloadUrls(VideoDownloadParameterv2 model)
+        {
+            //
 
+            List<VideoInfo> liste = new List<VideoInfo>();
+            string signature = string.Empty;
+            foreach (var item in model.AdaptiveFormats)
+            {
+                IDictionary<string, string> queries;
+                bool isChipper;
+                if (item.url != null)
+                {
+                    queries = process.UrlToDictionaryParameters(item.url);
+                    isChipper = false;
+                }
+                else
+                {
+                    queries = process.UrlToDictionaryParameters(item.cipher, false);
+                    isChipper = true;
+                }
+                string url;
+
+                string itag = queries["itag"];
+                int formatCode;
+                if (!Int32.TryParse(itag, out formatCode))
+                    throw new Exception("Uygun format bulunamadı");
+                var videoInfo = new VideoInfo(formatCode);
+                if (videoInfo.AudioBitrate == 0)
+                    continue;
+
+                if (isChipper)//queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
+                {
+
+                    string encryptSignature = queries.ContainsKey(Signature2) ? queries[Signature2] : queries[Signature1];
+                    signature = process.Decrypt(encryptSignature, model.jsPath);
+                    if (queries.ContainsKey(Signature2)) queries.Remove(Signature2); else queries.Remove(Signature1);
+                    queries.Add(Signature1, signature);
+                    var result = string.Join("&", queries.Select(i => i.Key + "=" + i.Value).ToArray());
+
+                    url = DefaultUrl + result;
+                    //url = string.Format("{0}&{1}={2}", queries["url"], Signature1, signature);
+
+                    string fallbackHost = queries.ContainsKey("fallback_host") ? "&fallback_host=" + queries["fallback_host"] : String.Empty;
+
+                    url += fallbackHost;
+                }
+                else
+                {
+                    var result = string.Join("&", queries.Select(i => i.Key + "=" + i.Value).ToArray());
+
+                    url = DefaultUrl + result;
+                }
+                IDictionary<string, string> parameters = process.UrlToDictionaryParameters(url);
+
+                if (!parameters.ContainsKey("ratebypass"))
+                    url += string.Format("&{0}={1}", "ratebypass", "yes");
+
+                videoInfo.DownloadUrl = url;
+                videoInfo.Title = model.videoTitle;
+                videoInfo.YoutubeLinkId = model.youtubeLinkId;
+
+                //yield return videoInfo;
+                liste.Add(videoInfo);
+            }
+            return liste.OrderByDescending(i=>i.Resolution);
+        }
         private IEnumerable<VideoInfo> GetDownloadUrls(VideoDownloadParameter model)
         {
             List<VideoInfo> liste = new List<VideoInfo>();
@@ -176,12 +263,12 @@ namespace Business
                 videoInfo.Title = model.videoTitle;
                 videoInfo.YoutubeLinkId = model.youtubeLinkId;
 
-                yield return videoInfo;
-                // liste.Add(videoInfo);
+                //yield return videoInfo;
+                liste.Add(videoInfo);
 
 
             }
-            //return liste;
+            return liste;
 
         }
 
@@ -196,7 +283,7 @@ namespace Business
 
             return pageSource.Contains(unavailableContainer);
         }
-        private Tuple<JObject,Ytplyer> LoadJson(string url)
+        private Tuple<JObject, Ytplyer> LoadJson(string url)
         {
             int i = 0;
             var doc = new HtmlDocument();
@@ -208,13 +295,13 @@ namespace Business
             var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
             var bitis = innerText.IndexOf(";ytplayer.load");
             var json = innerText.Substring(baslangic, bitis - baslangic);
-           
+
             var model = JsonConvert.DeserializeObject<Ytplyer>(json);
             var decoded = urldecode(model.args.player_response);
-          
-            model.args.responseModel =JsonConvert.DeserializeObject<PlayerResponse>(decoded);
+
+            model.args.responseModel = JsonConvert.DeserializeObject<PlayerResponse>(decoded);
             //var s=response.streamingData.formats.FirstOrDefault().cipher;
-            return new Tuple<JObject, Ytplyer>(JObject.Parse(json),model);
+            return new Tuple<JObject, Ytplyer>(JObject.Parse(json), model);
 
         }
         private string urldecode(string source) => System.Web.HttpUtility.UrlDecode(System.Web.HttpUtility.UrlDecode(source)).Replace(@"\u0026", @"&");
