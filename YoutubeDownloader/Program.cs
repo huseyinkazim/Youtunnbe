@@ -69,11 +69,12 @@ namespace YoutubeDownloader
                 try
                 {
                     Console.WriteLine("Lütfen indermek istediğiniz linki yapıştırın: ");
-                     link = Console.ReadLine();
+                    link = Console.ReadLine();
                     //link = "https://www.youtube.com/watch?v=LWE79K2Ii-s";
                     //link = "https://www.youtube.com/watch?v=YQHsXMglC9A";
                     //link = "https://www.youtube.com/watch?v=7F--wQVviSI";
                     //link = "https://www.youtube.com/watch?v=YQHsXMglC9A";
+                    //link = "https://www.youtube.com/embed/Rqz39wTP69o";
                     IYoutubeManager manager = new YoutubeManager();
                     IEnumerable<VideoInfo> videoInfos = manager.YoutubeMediaUrls(link);
 

@@ -50,7 +50,7 @@ namespace Business
             var splitByUrls = GetStreamMap(json);
             var adaptiveFmtSplitByUrls = GetAdaptiveStreamMap(json);
             splitByUrls.AddRange(adaptiveFmtSplitByUrls);
-         
+            var s = System.IO.Path.GetInvalidPathChars();
             List<VideoInfo> list = new List<VideoInfo>();
 #if false
             #region DownloadV2
@@ -118,7 +118,15 @@ namespace Business
             var player_response = JObject.Parse(System.Web.HttpUtility.UrlDecode(json["args"]["player_response"].ToString()));
             var videoDetails = JsonConvert.DeserializeObject<VideoDetail>(player_response["videoDetails"].ToString());
 
-            return string.IsNullOrEmpty(videoDetails.title) ? "videoPlayback" : videoDetails.title;
+            return RemoveInvalidChars (string.IsNullOrEmpty(videoDetails.title) ? "videoPlayback" : videoDetails.title);
+        }
+        public string RemoveInvalidChars(string value)
+        {
+            foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+            {
+                value = value.Replace(c, '_');
+            }
+            return value;
         }
         private List<string> GetStreamMap(JObject json)
         {
@@ -166,6 +174,7 @@ namespace Business
                     queries = process.UrlToDictionaryParameters(item.cipher, false);
                     isChipper = true;
                 }
+                queries.Add("title", model.videoTitle);
                 string url;
 
                 string itag = queries["itag"];
@@ -221,6 +230,7 @@ namespace Business
             foreach (string s in model.splitByUrls)
             {
                 IDictionary<string, string> queries = process.UrlToDictionaryParameters(s);
+                queries.Add("title", model.videoTitle);
                 string url;
 
                 string itag;
