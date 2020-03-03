@@ -254,9 +254,18 @@ namespace Business
             string signature = string.Empty;
             foreach (string s in model.splitByUrls)
             {
-                IDictionary<string, string> queries = process.UtubeUrlToDictionaryParameters(s);
-                queries.Add("title", model.videoTitle);
                 string url = DefaultUrl;
+                IDictionary<string, string> queries;
+                if (s.IndexOf("url") != -1)
+                {
+                    queries = process.UtubeUrlToDictionaryParameters(s);
+                }
+                else
+                {
+                    queries = process.UrlToDictionaryParameters(s);
+                }
+                queries.Add("title", model.videoTitle);
+
 
                 string itag;
 
@@ -271,8 +280,18 @@ namespace Business
                 if (videoInfo.AudioBitrate == 0)
                     continue;
 
+                if (s.IndexOf("url") == -1)
+                {
+                    videoInfo.DownloadUrl = s;
+                    videoInfo.Title = model.videoTitle;
+                    videoInfo.YoutubeLinkId = model.youtubeLinkId;
 
-                if (queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
+                    //yield return videoInfo;
+                    liste.Add(videoInfo);
+                    queries.Clear();
+                    continue;
+                }
+                    if (queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
                 {
 
                     string encryptSignature = queries.ContainsKey(Signature2) ? queries[Signature2] : queries[Signature1];
