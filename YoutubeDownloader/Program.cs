@@ -69,10 +69,11 @@ namespace YoutubeDownloader
                 try
                 {
                     Console.WriteLine("Lütfen indermek istediğiniz linki yapıştırın: ");
-                    //link = Console.ReadLine();
-                    link = "https://www.youtube.com/watch?v=yCs6UmogKEg";
-                    link = "https://www.youtube.com/watch?v=seM8oqrU2qA";
-                    link = "https://www.youtube.com/watch?v=VfnefdC13w8";
+                    link = Console.ReadLine();
+                    //link = "https://www.youtube.com/watch?v=yCs6UmogKEg";
+                    //link = "https://www.youtube.com/watch?v=seM8oqrU2qA";
+                    //link = "https://www.youtube.com/watch?v=VfnefdC13w8";
+                    //link = "https://www.youtube.com/watch?v=2a4Uxdy9TQY";
                     //link = "https://www.youtube.com/watch?v=w_vZom2qJQo";
                     //link = "https://www.youtube.com/watch?v=LWE79K2Ii-s";
                     //link = "https://www.youtube.com/watch?v=YQHsXMglC9A";

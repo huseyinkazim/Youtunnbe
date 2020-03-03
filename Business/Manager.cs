@@ -141,7 +141,6 @@ namespace Business
         }
         private Tuple<List<Format>, List<AdaptiveFormat>> GetStreamMap(JObject json)
         {
-            JToken streamMap = json["args"]["url_encoded_fmt_stream_map"];
 
             var player_response = json["args"]["player_response"].ToString();
 
@@ -149,21 +148,15 @@ namespace Business
 
             var formatToken = response["streamingData"]["formats"];
             var adaptiveFormatsToken = response["streamingData"]["adaptiveFormats"];
+
             var formats = formatToken.ToObject<Format[]>().ToList();
             List<AdaptiveFormat> adaptiveformats = new List<AdaptiveFormat>();
+
             for (int i = 0; i < adaptiveFormatsToken.Count(); i++)
-                adaptiveformats.Add(adaptiveFormatsToken[0].ToObject<AdaptiveFormat>());
+                adaptiveformats.Add(adaptiveFormatsToken[i].ToObject<AdaptiveFormat>());
 
             return Tuple.Create(formats, adaptiveformats);
 
-            //string streamMapString = streamMap == null ? null : streamMap.ToString();
-
-            //if (streamMapString == null || streamMapString.Contains("been+removed"))
-            //{
-            //    throw new Exception("Video is removed or has an age restriction.");
-            //}
-
-            //return streamMapString.Split(',').ToList();
         }
         private List<string> GetAdaptiveStreamMap(JObject json)
         {
@@ -291,7 +284,7 @@ namespace Business
                     queries.Clear();
                     continue;
                 }
-                    if (queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
+                if (queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
                 {
 
                     string encryptSignature = queries.ContainsKey(Signature2) ? queries[Signature2] : queries[Signature1];
