@@ -1,11 +1,78 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Entity
 {
+
+    #region 03.03.2020
+    public class InitRange
+    {
+        public string start { get; set; }
+        public string end { get; set; }
+    }
+
+    public class IndexRange
+    {
+        public string start { get; set; }
+        public string end { get; set; }
+    }
+
+    public class AdaptiveFormat
+    {
+        public int itag { get; set; }
+        public string mimeType { get; set; }
+        public int bitrate { get; set; }
+        public int width { get; set; }
+        public int height { get; set; }
+        public InitRange initRange { get; set; }
+        public IndexRange indexRange { get; set; }
+        public string lastModified { get; set; }
+        public string contentLength { get; set; }
+        public string quality { get; set; }
+        public string xtags { get; set; }
+        public int fps { get; set; }
+        public string qualityLabel { get; set; }
+        public string projectionType { get; set; }
+        public int averageBitrate { get; set; }
+        public string approxDurationMs { get; set; }
+        public string cipher { get; set; }
+        public string url { get; set; }
+
+        public string cipherDecoded { get { return WebUtility.UrlDecode(WebUtility.UrlDecode(this.cipher)); } }
+    }
+
+    public class Format
+    {
+        public int itag { get; set; }
+        public string mimeType { get; set; }
+        public int bitrate { get; set; }
+        public int width { get; set; }
+        public int height { get; set; }
+        public string lastModified { get; set; }
+        public string contentLength { get; set; }
+        public string quality { get; set; }
+        public string xtags { get; set; }
+        public string qualityLabel { get; set; }
+        public string projectionType { get; set; }
+        public int averageBitrate { get; set; }
+        public string audioQuality { get; set; }
+        public string approxDurationMs { get; set; }
+        public string audioSampleRate { get; set; }
+        public int audioChannels { get; set; }
+        public string cipher { get; set; }
+        public string url { get; set; }
+
+        public string cipherDecoded { get { return WebUtility.UrlDecode(WebUtility.UrlDecode(this.cipher)); } }
+    }
+    #endregion
+
+
+
+
     public class Args
     {
         public string hl { get; set; }
@@ -23,7 +90,7 @@ namespace Entity
         public string innertube_api_key { get; set; }
         public string c { get; set; }
         public string player_response { get; set; }
-        public PlayerResponse responseModel  { get; set; }
+        public PlayerResponse responseModel { get; set; }
         public string gapi_hint_params { get; set; }
         public string vss_host { get; set; }
         public string cver { get; set; }
@@ -54,72 +121,6 @@ namespace Entity
         public bool playableInEmbed { get; set; }
     }
 
-    public class Format
-    {
-        public int itag { get; set; }
-        public string mimeType { get; set; }
-        public long bitrate { get; set; }
-        public int width { get; set; }
-        public int height { get; set; }
-        public string lastModified { get; set; }
-        public string contentLength { get; set; }
-        public string quality { get; set; }
-        public string qualityLabel { get; set; }
-        public string projectionType { get; set; }
-        public int averageBitrate { get; set; }
-        public string audioQuality { get; set; }
-        public string approxDurationMs { get; set; }
-        public string audioSampleRate { get; set; }
-        public int audioChannels { get; set; }
-        public string cipher { get; set; }
-        public string url { set; get; }
-
-    }
-
-    public class InitRange
-    {
-        public string start { get; set; }
-        public string end { get; set; }
-    }
-
-    public class IndexRange
-    {
-        public string start { get; set; }
-        public string end { get; set; }
-    }
-
-    public class ColorInfo
-    {
-        public string primaries { get; set; }
-        public string transferCharacteristics { get; set; }
-        public string matrixCoefficients { get; set; }
-    }
-
-    public class AdaptiveFormat
-    {
-        public int itag { get; set; }
-        public string mimeType { get; set; }
-        public long bitrate { get; set; }
-        public int width { get; set; }
-        public int height { get; set; }
-        public InitRange initRange { get; set; }
-        public IndexRange indexRange { get; set; }
-        public string lastModified { get; set; }
-        public string contentLength { get; set; }
-        public string quality { get; set; }
-        public int fps { get; set; }
-        public string qualityLabel { get; set; }
-        public string projectionType { get; set; }
-        public int averageBitrate { get; set; }
-        public string approxDurationMs { get; set; }
-        public string cipher { get; set; }
-        public ColorInfo colorInfo { get; set; }
-        public bool? highReplication { get; set; }
-        public string audioQuality { get; set; }
-        public string audioSampleRate { get; set; }
-        public int? audioChannels { get; set; }
-        public string url { get; set; }
-    }
 
     public class StreamingData
     {

@@ -41,16 +41,27 @@ namespace Business
             var tuple = LoadJson(videoUrl);
             json = tuple.Item1;
             playerModel = tuple.Item2;
-            var allStream = MapToList<Format, AdaptiveFormat>(playerModel.args.responseModel.streamingData.formats, playerModel.args.responseModel.streamingData.adaptiveFormats);
+            //var allStream = MapToList<Format, AdaptiveFormat>(playerModel.args.responseModel.streamingData.formats, playerModel.args.responseModel.streamingData.adaptiveFormats);
             string path = GetVideoBaseJsPath(json);
             //redirector.googlevideo.com
             if (string.IsNullOrEmpty(path))
                 throw new Exception("Beklenmedik bir hata oluştu");
 
-            var splitByUrls = GetStreamMap(json);
-            var adaptiveFmtSplitByUrls = GetAdaptiveStreamMap(json);
-            splitByUrls.AddRange(adaptiveFmtSplitByUrls);
-            var s = System.IO.Path.GetInvalidPathChars();
+            var models = GetStreamMap(json);
+
+            List<string> splitByUrls = new List<string>();
+            // var adaptiveFmtSplitByUrls = GetAdaptiveStreamMap(json);
+            if (models.Item1[0].cipher != null)
+            {
+                splitByUrls.AddRange(models.Item1.Select(i => i.cipherDecoded));
+                splitByUrls.AddRange(models.Item2.Select(i => i.cipherDecoded));
+            }
+            else
+            {
+                splitByUrls.AddRange(models.Item1.Select(i => i.url));
+                splitByUrls.AddRange(models.Item2.Select(i => i.url));
+            }
+
             List<VideoInfo> list = new List<VideoInfo>();
 #if false
             #region DownloadV2
@@ -118,7 +129,7 @@ namespace Business
             var player_response = JObject.Parse(System.Web.HttpUtility.UrlDecode(json["args"]["player_response"].ToString()));
             var videoDetails = JsonConvert.DeserializeObject<VideoDetail>(player_response["videoDetails"].ToString());
 
-            return RemoveInvalidChars (string.IsNullOrEmpty(videoDetails.title) ? "videoPlayback" : videoDetails.title);
+            return RemoveInvalidChars(string.IsNullOrEmpty(videoDetails.title) ? "videoPlayback" : videoDetails.title);
         }
         public string RemoveInvalidChars(string value)
         {
@@ -128,18 +139,31 @@ namespace Business
             }
             return value;
         }
-        private List<string> GetStreamMap(JObject json)
+        private Tuple<List<Format>, List<AdaptiveFormat>> GetStreamMap(JObject json)
         {
             JToken streamMap = json["args"]["url_encoded_fmt_stream_map"];
 
-            string streamMapString = streamMap == null ? null : streamMap.ToString();
+            var player_response = json["args"]["player_response"].ToString();
 
-            if (streamMapString == null || streamMapString.Contains("been+removed"))
-            {
-                throw new Exception("Video is removed or has an age restriction.");
-            }
+            var response = JObject.Parse(player_response);
 
-            return streamMapString.Split(',').ToList();
+            var formatToken = response["streamingData"]["formats"];
+            var adaptiveFormatsToken = response["streamingData"]["adaptiveFormats"];
+            var formats = formatToken.ToObject<Format[]>().ToList();
+            List<AdaptiveFormat> adaptiveformats = new List<AdaptiveFormat>();
+            for (int i = 0; i < adaptiveFormatsToken.Count(); i++)
+                adaptiveformats.Add(adaptiveFormatsToken[0].ToObject<AdaptiveFormat>());
+
+            return Tuple.Create(formats, adaptiveformats);
+
+            //string streamMapString = streamMap == null ? null : streamMap.ToString();
+
+            //if (streamMapString == null || streamMapString.Contains("been+removed"))
+            //{
+            //    throw new Exception("Video is removed or has an age restriction.");
+            //}
+
+            //return streamMapString.Split(',').ToList();
         }
         private List<string> GetAdaptiveStreamMap(JObject json)
         {
@@ -164,9 +188,10 @@ namespace Business
             {
                 IDictionary<string, string> queries;
                 bool isChipper;
-                if (item.url != null)
+                if ("" != null)
                 {
-                    queries = process.UrlToDictionaryParameters(item.url);
+                    //queries = process.UrlToDictionaryParameters(item.url);
+                    queries = process.UrlToDictionaryParameters("");
                     isChipper = false;
                 }
                 else
@@ -219,7 +244,7 @@ namespace Business
                 //yield return videoInfo;
                 liste.Add(videoInfo);
             }
-            return liste.OrderByDescending(i=>i.Resolution);
+            return liste.OrderByDescending(i => i.Resolution);
         }
         private IEnumerable<VideoInfo> GetDownloadUrls(VideoDownloadParameter model)
         {
@@ -229,9 +254,9 @@ namespace Business
             string signature = string.Empty;
             foreach (string s in model.splitByUrls)
             {
-                IDictionary<string, string> queries = process.UrlToDictionaryParameters(s);
+                IDictionary<string, string> queries = process.UtubeUrlToDictionaryParameters(s);
                 queries.Add("title", model.videoTitle);
-                string url;
+                string url = DefaultUrl;
 
                 string itag;
 
@@ -245,28 +270,27 @@ namespace Business
                 var videoInfo = new VideoInfo(formatCode);
                 if (videoInfo.AudioBitrate == 0)
                     continue;
+
+
                 if (queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
                 {
 
                     string encryptSignature = queries.ContainsKey(Signature2) ? queries[Signature2] : queries[Signature1];
                     signature = process.Decrypt(encryptSignature, model.jsPath);
 
-                    url = string.Format("{0}&{1}={2}", queries["url"], Signature1, signature);
+                    url = string.Format("{0}&{1}={2}", url, Signature1, signature);
 
                     string fallbackHost = queries.ContainsKey("fallback_host") ? "&fallback_host=" + queries["fallback_host"] : String.Empty;
 
                     url += fallbackHost;
                 }
-
-                else
+                foreach (var dic in queries)
                 {
-                    url = queries["url"];
+                    url = string.Format("{0}&{1}={2}", url, dic.Key, dic.Value);
                 }
+                // IDictionary<string, string> parameters = process.UrlToDictionaryParameters(url);
 
-
-                IDictionary<string, string> parameters = process.UrlToDictionaryParameters(url);
-
-                if (!parameters.ContainsKey("ratebypass"))
+                if (!queries.ContainsKey("ratebypass"))
                     url += string.Format("&{0}={1}", "ratebypass", "yes");
 
                 videoInfo.DownloadUrl = url;
@@ -275,6 +299,7 @@ namespace Business
 
                 //yield return videoInfo;
                 liste.Add(videoInfo);
+                queries.Clear();
 
 
             }

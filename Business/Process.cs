@@ -43,13 +43,14 @@ namespace Business
         }
         public Dictionary<string, string> UrlToDictionaryParameters(string link, bool isContainsControl = true)
         {
-
+          
             if (link.Contains("?") && isContainsControl)
             {
                 link = link.Substring(link.IndexOf('?') + 1);
             }
             var dictionary = new Dictionary<string, string>();
-            foreach (var paremeter in link.Split('&','?'))
+       
+            foreach (var paremeter in link.Split('&', '?'))
             {
 
                 var baslangic = paremeter.IndexOf("=") + 1;
@@ -57,9 +58,48 @@ namespace Business
 
                 var parameters = paremeter.Split('=');
 
-                dictionary.Add(parameters[0], System.Web.HttpUtility.UrlDecode(paremeter.Substring(baslangic)));
+                dictionary.Add(parameters[0], paremeter.Substring(baslangic));
             }
             return dictionary;
+        }
+        public Dictionary<string, string> UtubeUrlToDictionaryParameters(string link, bool isContainsControl = true)
+        {
+            try
+            {
+                var s1 = link.Substring(link.IndexOf("url"));
+                var s2 = link.Substring(0, link.IndexOf("url"));
+                if (link.Contains("?") && isContainsControl)
+                {
+                    link = s1.Substring(s1.IndexOf('?') + 1);
+                }
+                var dictionary = new Dictionary<string, string>();
+                foreach (var paremeter in s2.Split('&', '?'))
+                {
+                    if (paremeter == string.Empty)
+                        continue;
+                    var baslangic = paremeter.IndexOf("=") + 1;
+
+
+                    var parameters = paremeter.Split('=');
+                    dictionary.Add(parameters[0], paremeter.Substring(baslangic));
+                }
+                foreach (var paremeter in link.Split('&', '?'))
+                {
+
+                    var baslangic = paremeter.IndexOf("=") + 1;
+
+
+                    var parameters = paremeter.Split('=');
+
+                    dictionary.Add(parameters[0], paremeter.Substring(baslangic));
+                }
+                return dictionary;
+            }
+            catch(Exception ex)
+            {
+                throw new Exception("");
+
+            }
         }
         private string GetUrlResouces(string url)
         {
