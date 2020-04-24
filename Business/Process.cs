@@ -131,7 +131,7 @@ namespace Business
 
         private string DecryptEncryptedSignature_v2(string cipher, string jsPath)
         {
-            string jsUrl = string.Format($"https://s.ytimg.com{jsPath}");
+            string jsUrl = string.Format($"https://www.youtube.com{jsPath}");
 
             string js = GetUrlResouces(jsUrl);
 
