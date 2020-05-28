@@ -12,6 +12,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Business
 {
@@ -257,8 +258,7 @@ namespace Business
                 {
                     queries = process.UrlToDictionaryParameters(s);
                 }
-                queries.Add("title", model.videoTitle);
-
+                queries.Add("title", HttpUtility.UrlEncode(model.videoTitle));
 
                 string itag;
 
@@ -275,7 +275,8 @@ namespace Business
 
                 if (s.IndexOf("url") == -1)
                 {
-                    videoInfo.DownloadUrl = s;
+                    videoInfo.DownloadUrl = s + $"&title={HttpUtility.UrlEncode(model.videoTitle)}";
+                    
                     videoInfo.Title = model.videoTitle;
                     videoInfo.YoutubeLinkId = model.youtubeLinkId;
 
@@ -296,6 +297,7 @@ namespace Business
 
                     url += fallbackHost;
                 }
+                //queries.Add("title", HttpUtility.UrlEncode(model.videoTitle));
                 foreach (var dic in queries)
                 {
                     url = string.Format("{0}&{1}={2}", url, dic.Key, dic.Value);
@@ -305,7 +307,7 @@ namespace Business
                 if (!queries.ContainsKey("ratebypass"))
                     url += string.Format("&{0}={1}", "ratebypass", "yes");
 
-                videoInfo.DownloadUrl = url;
+                videoInfo.DownloadUrl = url + $"&title={HttpUtility.UrlEncode(model.videoTitle)}"; 
                 videoInfo.Title = model.videoTitle;
                 videoInfo.YoutubeLinkId = model.youtubeLinkId;
 
