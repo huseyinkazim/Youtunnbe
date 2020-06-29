@@ -1,4 +1,5 @@
 ﻿using Entity;
+using Entity.Response;
 using HtmlAgilityPack;
 using Jurassic.Library;
 using Newtonsoft.Json;
@@ -28,6 +29,7 @@ namespace Business
         {
 
             string videoUrl, VideoId;
+
             if (YoutubeUrl == null)
                 throw new ArgumentNullException("videoUrl");
             bool isYoutubeUrl = TryNormalizeYoutubeUrl(YoutubeUrl, out VideoId);
@@ -52,15 +54,15 @@ namespace Business
 
             List<string> splitByUrls = new List<string>();
             // var adaptiveFmtSplitByUrls = GetAdaptiveStreamMap(json);
-            if (models.Item1[0].cipher != null)
+            if (models[0].signatureCipher != null)
             {
-                splitByUrls.AddRange(models.Item1.Select(i => i.cipherDecoded));
-                splitByUrls.AddRange(models.Item2.Select(i => i.cipherDecoded));
+                for (int i = 0; i < models.Count; i++)
+                    splitByUrls.Add(models[i].signatureCipher.ToString());
             }
             else
             {
-                splitByUrls.AddRange(models.Item1.Select(i => i.url));
-                splitByUrls.AddRange(models.Item2.Select(i => i.url));
+                for (int i = 0; i < models.Count; i++)
+                    splitByUrls.Add(models[i].url.ToString());
             }
 
             List<VideoInfo> list = new List<VideoInfo>();
@@ -140,8 +142,11 @@ namespace Business
             }
             return value;
         }
-        private Tuple<List<Format>, List<AdaptiveFormat>> GetStreamMap(JObject json)
+        // private Tuple<List<Entity.Format>, List<AdaptiveFormat>> GetStreamMap(JObject json)
+        private List<dynamic> GetStreamMap(JObject json)
         {
+            #region dynamic
+            List<dynamic> adaptiveformatsDynamic = new List<dynamic>();
 
             var player_response = json["args"]["player_response"].ToString();
 
@@ -150,14 +155,26 @@ namespace Business
             var formatToken = response["streamingData"]["formats"];
             var adaptiveFormatsToken = response["streamingData"]["adaptiveFormats"];
 
-            var formats = formatToken.ToObject<Format[]>().ToList();
-            List<AdaptiveFormat> adaptiveformats = new List<AdaptiveFormat>();
+            var formatDynamic = JsonConvert.DeserializeObject<dynamic>(formatToken.ToString());
+            var adaptiveFormatsTokenDynamic = JsonConvert.DeserializeObject<dynamic>(adaptiveFormatsToken.ToString());
+            for (int i = 0; i < formatDynamic.Count; i++)
+                adaptiveformatsDynamic.Add(formatDynamic[i]);
 
             for (int i = 0; i < adaptiveFormatsToken.Count(); i++)
-                adaptiveformats.Add(adaptiveFormatsToken[i].ToObject<AdaptiveFormat>());
+                adaptiveformatsDynamic.Add(adaptiveFormatsToken[i].ToObject<dynamic>());
 
-            return Tuple.Create(formats, adaptiveformats);
 
+            return adaptiveformatsDynamic;
+            #endregion
+            #region model
+            //    var formats = formatToken.ToObject<Entity.Format[]>().ToList();
+            //List<AdaptiveFormat> adaptiveformats = new List<AdaptiveFormat>();
+
+            //for (int i = 0; i < adaptiveFormatsToken.Count(); i++)
+            //    adaptiveformats.Add(adaptiveFormatsToken[i].ToObject<AdaptiveFormat>());
+
+            // return Tuple.Create(formats, adaptiveformats);
+            #endregion
         }
         private List<string> GetAdaptiveStreamMap(JObject json)
         {
@@ -259,7 +276,8 @@ namespace Business
                     queries = process.UrlToDictionaryParameters(s);
                 }
                 queries.Add("title", HttpUtility.UrlEncode(model.videoTitle));
-
+                if (queries.ContainsKey("url"))
+                    url = queries["url"];
                 string itag;
 
 
@@ -276,7 +294,7 @@ namespace Business
                 if (s.IndexOf("url") == -1)
                 {
                     videoInfo.DownloadUrl = s + $"&title={HttpUtility.UrlEncode(model.videoTitle)}";
-                    
+
                     videoInfo.Title = model.videoTitle;
                     videoInfo.YoutubeLinkId = model.youtubeLinkId;
 
@@ -290,15 +308,17 @@ namespace Business
 
                     string encryptSignature = queries.ContainsKey(Signature2) ? queries[Signature2] : queries[Signature1];
                     signature = process.Decrypt(encryptSignature, model.jsPath);
-
-                    url = string.Format("{0}&{1}={2}", url, Signature1, signature);
+                    if (url.Contains("&"))
+                        url = string.Format("{0}&{1}={2}", url, Signature1, signature);
+                    else
+                        url = string.Format("{0}{1}={2}", url, Signature1, signature);
 
                     string fallbackHost = queries.ContainsKey("fallback_host") ? "&fallback_host=" + queries["fallback_host"] : String.Empty;
 
                     url += fallbackHost;
                 }
                 //queries.Add("title", HttpUtility.UrlEncode(model.videoTitle));
-                foreach (var dic in queries)
+                foreach (var dic in queries.Where(i => i.Key != Signature1 && i.Key != Signature2))
                 {
                     url = string.Format("{0}&{1}={2}", url, dic.Key, dic.Value);
                 }
@@ -307,7 +327,7 @@ namespace Business
                 if (!queries.ContainsKey("ratebypass"))
                     url += string.Format("&{0}={1}", "ratebypass", "yes");
 
-                videoInfo.DownloadUrl = url + $"&title={HttpUtility.UrlEncode(model.videoTitle)}"; 
+                videoInfo.DownloadUrl = url + $"&title={HttpUtility.UrlEncode(model.videoTitle)}";
                 videoInfo.Title = model.videoTitle;
                 videoInfo.YoutubeLinkId = model.youtubeLinkId;
 
@@ -342,13 +362,15 @@ namespace Business
             var scripts = doc.DocumentNode.SelectNodes("//script");
             var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText;
             var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
-            var bitis = innerText.IndexOf(";ytplayer.load");
+            var bitis = innerText.IndexOf(";ytplayer.web_player_context_config") != -1
+                ? innerText.IndexOf(";ytplayer.web_player_context_config")
+                : innerText.IndexOf(";ytplayer.load");
             var json = innerText.Substring(baslangic, bitis - baslangic);
 
             var model = JsonConvert.DeserializeObject<Ytplyer>(json);
-            var decoded = urldecode(model.args.player_response);
+            var decoded = urldecode(model.Args.PlayerResponse);
 
-            model.args.responseModel = JsonConvert.DeserializeObject<PlayerResponse>(decoded);
+            model.Args.responseModel = JsonConvert.DeserializeObject<dynamic>(decoded);
             //var s=response.streamingData.formats.FirstOrDefault().cipher;
             return new Tuple<JObject, Ytplyer>(JObject.Parse(json), model);
 

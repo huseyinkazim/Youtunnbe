@@ -66,13 +66,17 @@ namespace Business
         {
             try
             {
-                var s1 = link.Substring(link.IndexOf("url"));
+                string urlParameter=string.Empty;
+                var s1 = System.Web.HttpUtility.UrlDecode(link.Substring(link.IndexOf("url")));
                 var s2 = link.Substring(0, link.IndexOf("url"));
-                if (link.Contains("?") && isContainsControl)
+
+                if (s1.Contains("?") && isContainsControl)
                 {
-                    link = s1.Substring(s1.IndexOf('?') + 1);
+                    urlParameter = s1.Substring(s1.IndexOf('?') + 1);
+
                 }
                 var dictionary = new Dictionary<string, string>();
+                dictionary.Add("url", s1.Substring(4, s1.IndexOf(urlParameter)-4));
                 foreach (var paremeter in s2.Split('&', '?'))
                 {
                     if (paremeter == string.Empty)
@@ -83,7 +87,7 @@ namespace Business
                     var parameters = paremeter.Split('=');
                     dictionary.Add(parameters[0], paremeter.Substring(baslangic));
                 }
-                foreach (var paremeter in link.Split('&', '?'))
+                foreach (var paremeter in urlParameter.Split('&', '?'))
                 {
 
                     var baslangic = paremeter.IndexOf("=") + 1;

@@ -44,7 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PlayerResponse.cs" />
     <Compile Include="VideoDetail.cs" />
+    <Compile Include="VideoFormat.cs" />
     <Compile Include="VideoInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
