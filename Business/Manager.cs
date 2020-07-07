@@ -1,5 +1,4 @@
 ﻿using Entity;
-using Entity.Response;
 using HtmlAgilityPack;
 using Jurassic.Library;
 using Newtonsoft.Json;
@@ -37,61 +36,46 @@ namespace Business
             {
                 throw new ArgumentException("URL is not a valid youtube URL!");
             }
+
             videoUrl = "http://youtube.com/watch?v=" + VideoId;
             JObject json;
-            Ytplyer playerModel;
 
-            var tuple = LoadJson(videoUrl);
-            json = tuple.Item1;
-            playerModel = tuple.Item2;
-            //var allStream = MapToList<Format, AdaptiveFormat>(playerModel.args.responseModel.streamingData.formats, playerModel.args.responseModel.streamingData.adaptiveFormats);
-            string path = GetVideoBaseJsPath(json);
-            //redirector.googlevideo.com
-            if (string.IsNullOrEmpty(path))
-                throw new Exception("Beklenmedik bir hata oluştu");
+            json = LoadJson(videoUrl);
 
-            var models = GetStreamMap(json);
+            string jsPath = GetVideoBaseJsPath(json);
+
+            if (string.IsNullOrEmpty(jsPath))
+                throw new Exception("JsPath bulunamadı");
+
+            var models = GetVideoDatas(json);
 
             List<string> splitByUrls = new List<string>();
-            // var adaptiveFmtSplitByUrls = GetAdaptiveStreamMap(json);
-            if (models[0].signatureCipher != null)
+
+
+            for (int i = 0; i < models.Count; i++)
             {
-                for (int i = 0; i < models.Count; i++)
+                if (models[i].signatureCipher != null)
                     splitByUrls.Add(models[i].signatureCipher.ToString());
-            }
-            else
-            {
-                for (int i = 0; i < models.Count; i++)
+                else
                     splitByUrls.Add(models[i].url.ToString());
+
             }
+
 
             List<VideoInfo> list = new List<VideoInfo>();
-#if false
-            #region DownloadV2
-            var parameter = new VideoDownloadParameterv2
-            {
-                jsPath = path,
-                videoTitle = GetVideoTitle(json),
-                youtubeLinkId = VideoId,
-                AdaptiveFormats = allStream
-            };
-            list = GetDownloadUrls(parameter).ToList();
-            #endregion
-#endif
-#if true
-            #region DownloadV2
 
-            var parameter = new VideoDownloadParameter
+
+            var parameter = new 
             {
                 json = json,
                 videoTitle = GetVideoTitle(json),
-                jsPath = path,
+                jsPath = jsPath,
                 splitByUrls = splitByUrls.ToArray(),
                 youtubeLinkId = VideoId
             };
+            //todo: en son burada kaldım
             list = GetDownloadUrls(parameter).ToList();
-            #endregion
-#endif
+
 
 
             return list;
@@ -99,40 +83,13 @@ namespace Business
 
         }
 
-        private L MapTo<T, L>(T from)
-        {
-            var fromType = typeof(T);
-            var toType = typeof(L);
-
-            var toModel = Activator.CreateInstance(toType);
-
-            foreach (var prop in fromType.GetProperties())
-            {
-                var obj = prop.GetValue(from);
-                toType.GetProperty(prop.Name).SetValue(toModel, obj);
-            }
-
-            return (L)toModel;
-
-        }
-        private List<L> MapToList<T, L>(List<T> from, List<L> ListModel)
-        {
-            //var ListModel =(List<L>)Activator.CreateInstance(typeof(List<L>));
-            foreach (var item in from)
-            {
-                ListModel.Add(MapTo<T, L>(item));
-            }
-
-
-            return ListModel;
-        }
         private string GetVideoTitle(JObject json)
         {
             JToken title = json["args"]["title"];
             var player_response = JObject.Parse(System.Web.HttpUtility.UrlDecode(json["args"]["player_response"].ToString()));
-            var videoDetails = JsonConvert.DeserializeObject<VideoDetail>(player_response["videoDetails"].ToString());
+            var videoTitle = player_response["videoDetails"]["title"].ToString();
 
-            return RemoveInvalidChars(string.IsNullOrEmpty(videoDetails.title) ? "videoPlayback" : videoDetails.title);
+            return RemoveInvalidChars(string.IsNullOrEmpty(videoTitle) ? "videoPlayback" : videoTitle);
         }
         public string RemoveInvalidChars(string value)
         {
@@ -142,128 +99,34 @@ namespace Business
             }
             return value;
         }
-        // private Tuple<List<Entity.Format>, List<AdaptiveFormat>> GetStreamMap(JObject json)
-        private List<dynamic> GetStreamMap(JObject json)
+        private List<dynamic> GetVideoDatas(JObject json)
         {
-            #region dynamic
-            List<dynamic> adaptiveformatsDynamic = new List<dynamic>();
+            List<dynamic> videoDatas = new List<dynamic>();
 
-            var player_response = json["args"]["player_response"].ToString();
+            var response = JObject.Parse(json["args"]["player_response"].ToString())["streamingData"];
 
-            var response = JObject.Parse(player_response);
-
-            var formatToken = response["streamingData"]["formats"];
-            var adaptiveFormatsToken = response["streamingData"]["adaptiveFormats"];
+            var formatToken = response["formats"];
+            var adaptiveFormatsToken = response["adaptiveFormats"];
 
             var formatDynamic = JsonConvert.DeserializeObject<dynamic>(formatToken.ToString());
             var adaptiveFormatsTokenDynamic = JsonConvert.DeserializeObject<dynamic>(adaptiveFormatsToken.ToString());
             for (int i = 0; i < formatDynamic.Count; i++)
-                adaptiveformatsDynamic.Add(formatDynamic[i]);
+                videoDatas.Add(formatDynamic[i]);
 
             for (int i = 0; i < adaptiveFormatsToken.Count(); i++)
-                adaptiveformatsDynamic.Add(adaptiveFormatsToken[i].ToObject<dynamic>());
+                videoDatas.Add(adaptiveFormatsToken[i].ToObject<dynamic>());
 
 
-            return adaptiveformatsDynamic;
-            #endregion
-            #region model
-            //    var formats = formatToken.ToObject<Entity.Format[]>().ToList();
-            //List<AdaptiveFormat> adaptiveformats = new List<AdaptiveFormat>();
+            return videoDatas;
 
-            //for (int i = 0; i < adaptiveFormatsToken.Count(); i++)
-            //    adaptiveformats.Add(adaptiveFormatsToken[i].ToObject<AdaptiveFormat>());
-
-            // return Tuple.Create(formats, adaptiveformats);
-            #endregion
         }
-        private List<string> GetAdaptiveStreamMap(JObject json)
-        {
-            JToken streamMap = json["args"]["adaptive_fmts"];
-
-            if (streamMap == null)
-            {
-                streamMap = json["args"]["url_encoded_fmt_stream_map"];
-            }
-            var result = streamMap.ToString();
-            var s = result.Split(',').Where(i => Cache.Defaults.FirstOrDefault(j => j.FormatCode.ToString() == process.UrlToDictionaryParameters(i)["itag"].ToString()) != null &&
-              Cache.Defaults.FirstOrDefault(j => j.FormatCode.ToString() == process.UrlToDictionaryParameters(i)["itag"].ToString()).AudioBitrate != 0).ToList();
-            return s;
-        }
-        private IEnumerable<VideoInfo> GetDownloadUrls(VideoDownloadParameterv2 model)
-        {
-            //
-
-            List<VideoInfo> liste = new List<VideoInfo>();
-            string signature = string.Empty;
-            foreach (var item in model.AdaptiveFormats)
-            {
-                IDictionary<string, string> queries;
-                bool isChipper;
-                if ("" != null)
-                {
-                    //queries = process.UrlToDictionaryParameters(item.url);
-                    queries = process.UrlToDictionaryParameters("");
-                    isChipper = false;
-                }
-                else
-                {
-                    queries = process.UrlToDictionaryParameters(item.cipher, false);
-                    isChipper = true;
-                }
-                queries.Add("title", model.videoTitle);
-                string url;
-
-                string itag = queries["itag"];
-                int formatCode;
-                if (!Int32.TryParse(itag, out formatCode))
-                    throw new Exception("Uygun format bulunamadı");
-                var videoInfo = new VideoInfo(formatCode);
-                if (videoInfo.AudioBitrate == 0)
-                    continue;
-
-                if (isChipper)//queries.ContainsKey(Signature2) || queries.ContainsKey(Signature1))
-                {
-
-                    string encryptSignature = queries.ContainsKey(Signature2) ? queries[Signature2] : queries[Signature1];
-                    signature = process.Decrypt(encryptSignature, model.jsPath);
-                    if (queries.ContainsKey(Signature2)) queries.Remove(Signature2); else queries.Remove(Signature1);
-                    queries.Add(Signature1, signature);
-                    var result = string.Join("&", queries.Select(i => i.Key + "=" + i.Value).ToArray());
-
-                    url = DefaultUrl + result;
-                    //url = string.Format("{0}&{1}={2}", queries["url"], Signature1, signature);
-
-                    string fallbackHost = queries.ContainsKey("fallback_host") ? "&fallback_host=" + queries["fallback_host"] : String.Empty;
-
-                    url += fallbackHost;
-                }
-                else
-                {
-                    var result = string.Join("&", queries.Select(i => i.Key + "=" + i.Value).ToArray());
-
-                    url = DefaultUrl + result;
-                }
-                IDictionary<string, string> parameters = process.UrlToDictionaryParameters(url);
-
-                if (!parameters.ContainsKey("ratebypass"))
-                    url += string.Format("&{0}={1}", "ratebypass", "yes");
-
-                videoInfo.DownloadUrl = url;
-                videoInfo.Title = model.videoTitle;
-                videoInfo.YoutubeLinkId = model.youtubeLinkId;
-
-                //yield return videoInfo;
-                liste.Add(videoInfo);
-            }
-            return liste.OrderByDescending(i => i.Resolution);
-        }
-        private IEnumerable<VideoInfo> GetDownloadUrls(VideoDownloadParameter model)
+        private IEnumerable<VideoInfo> GetDownloadUrls(dynamic model)
         {
             List<VideoInfo> liste = new List<VideoInfo>();
 
 
             string signature = string.Empty;
-            foreach (string s in model.splitByUrls)
+            foreach (string s in model["splitByUrls"])
             {
                 string url = DefaultUrl;
                 IDictionary<string, string> queries;
@@ -340,25 +203,18 @@ namespace Business
             return liste;
 
         }
-
         private string GetVideoBaseJsPath(JObject json)
         {
             JToken js = json["assets"]["js"];
             return js == null ? String.Empty : js.ToString();
         }
-        private bool IsVideoUnavailable(string pageSource)
+        private JObject LoadJson(string url)
         {
-            const string unavailableContainer = "<div id=\"watch-player-unavailable\">";
-
-            return pageSource.Contains(unavailableContainer);
-        }
-        private Tuple<JObject, Ytplyer> LoadJson(string url)
-        {
-            int i = 0;
             var doc = new HtmlDocument();
 
             string html = GetUrlResouces(url);
             doc.LoadHtml(html);
+
             var scripts = doc.DocumentNode.SelectNodes("//script");
             var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText;
             var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
@@ -367,19 +223,9 @@ namespace Business
                 : innerText.IndexOf(";ytplayer.load");
             var json = innerText.Substring(baslangic, bitis - baslangic);
 
-            var model = JsonConvert.DeserializeObject<Ytplyer>(json);
-            var decoded = urldecode(model.Args.PlayerResponse);
-
-            model.Args.responseModel = JsonConvert.DeserializeObject<dynamic>(decoded);
-            //var s=response.streamingData.formats.FirstOrDefault().cipher;
-            return new Tuple<JObject, Ytplyer>(JObject.Parse(json), model);
+            return JObject.Parse(json);
 
         }
-        private string urldecode(string source) => System.Web.HttpUtility.UrlDecode(System.Web.HttpUtility.UrlDecode(source)).Replace(@"\u0026", @"&");
-
-
-
-
         private string GetUrlResouces(string url)
         {
             using (var client = new WebClient())

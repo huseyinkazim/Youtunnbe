@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -87,12 +88,7 @@ namespace Entity
         }
         //private string jsPath { set; get; }
     }
-    public class ExtractionInfo
-    {
-        public bool RequiresDecryption { get; set; }
 
-        public Uri Uri { get; set; }
-    }
     public enum VideoType
     {
         Mobile,
@@ -173,4 +169,5 @@ namespace Entity
             new VideoInfo(172, VideoType.WebM, 0, false, AudioType.Vorbis, 192, AdaptiveType.Audio)
         };
     }
+    
 }
