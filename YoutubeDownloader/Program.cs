@@ -35,7 +35,11 @@ namespace YoutubeDownloader
         {
             Task.Run(() =>
             {
-                var filePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Youtube";
+                var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) , "Youtube");
+
+                if (!Directory.Exists(filePath))
+                    Directory.CreateDirectory(filePath);
+
                 VideoDownloader videoDownloader;
                 if (video.Resolution != 0)
                     videoDownloader = new VideoDownloader(video,
@@ -69,7 +73,7 @@ namespace YoutubeDownloader
                 try
                 {
                     Console.WriteLine("Lütfen indermek istediğiniz linki yapıştırın: ");
-                   // link = Console.ReadLine();
+                    link = Console.ReadLine();
                     //link = "https://www.youtube.com/watch?v=yCs6UmogKEg";
                     //link = "https://www.youtube.com/watch?v=seM8oqrU2qA";
                     //link = "https://www.youtube.com/watch?v=VfnefdC13w8";

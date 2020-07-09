@@ -27,7 +27,7 @@ namespace Business
         public IEnumerable<VideoInfo> YoutubeMediaUrls(string YoutubeUrl)
         {
 
-            string videoUrl, VideoId;
+            string VideoId;
 
             if (YoutubeUrl == null)
                 throw new ArgumentNullException("videoUrl");
@@ -37,12 +37,11 @@ namespace Business
                 throw new ArgumentException("URL is not a valid youtube URL!");
             }
 
-            videoUrl = "http://youtube.com/watch?v=" + VideoId;
             JObject json;
 
-            json = LoadJson(videoUrl);
+            json = LoadJson(VideoId);
 
-            string jsPath = GetVideoBaseJsPath(json);
+            string jsPath = GetVideoBaseJsPath(VideoId);
 
             if (string.IsNullOrEmpty(jsPath))
                 throw new Exception("JsPath bulunamadı");
@@ -65,7 +64,7 @@ namespace Business
             List<VideoInfo> list = new List<VideoInfo>();
 
 
-            var parameter = new 
+            var parameter = new
             {
                 json = json,
                 videoTitle = GetVideoTitle(json),
@@ -85,9 +84,7 @@ namespace Business
 
         private string GetVideoTitle(JObject json)
         {
-            JToken title = json["args"]["title"];
-            var player_response = JObject.Parse(System.Web.HttpUtility.UrlDecode(json["args"]["player_response"].ToString()));
-            var videoTitle = player_response["videoDetails"]["title"].ToString();
+            var videoTitle = json["videoDetails"]["title"].ToString();
 
             return RemoveInvalidChars(string.IsNullOrEmpty(videoTitle) ? "videoPlayback" : videoTitle);
         }
@@ -103,7 +100,7 @@ namespace Business
         {
             List<dynamic> videoDatas = new List<dynamic>();
 
-            var response = JObject.Parse(json["args"]["player_response"].ToString())["streamingData"];
+            var response = json["streamingData"];
 
             var formatToken = response["formats"];
             var adaptiveFormatsToken = response["adaptiveFormats"];
@@ -126,7 +123,7 @@ namespace Business
 
 
             string signature = string.Empty;
-            foreach (string s in model["splitByUrls"])
+            foreach (string s in model.splitByUrls)
             {
                 string url = DefaultUrl;
                 IDictionary<string, string> queries;
@@ -203,16 +200,13 @@ namespace Business
             return liste;
 
         }
-        private string GetVideoBaseJsPath(JObject json)
+        private string GetVideoBaseJsPath(string VideoId)
         {
-            JToken js = json["assets"]["js"];
-            return js == null ? String.Empty : js.ToString();
-        }
-        private JObject LoadJson(string url)
-        {
-            var doc = new HtmlDocument();
+            var url = "http://youtube.com/watch?v=" + VideoId;
 
+            var doc = new HtmlDocument();
             string html = GetUrlResouces(url);
+
             doc.LoadHtml(html);
 
             var scripts = doc.DocumentNode.SelectNodes("//script");
@@ -223,8 +217,45 @@ namespace Business
                 : innerText.IndexOf(";ytplayer.load");
             var json = innerText.Substring(baslangic, bitis - baslangic);
 
-            return JObject.Parse(json);
+             
+            JToken js = JObject.Parse(json)["assets"]["js"];
+            return js == null ? String.Empty : js.ToString();
+        }
+        private string GetYoutubeDecodedUrl(string url)
+        {
+            return HttpUtility.UrlDecode(HttpUtility.UrlDecode(Regex.Unescape(url)));
 
+        }
+        private JObject LoadJson(string VideoId)
+        {
+            string url;
+            url = $"https://www.youtube.com/get_video_info?video_id={VideoId}&eurl=https://youtube.googleapis.com/v/{VideoId}";
+
+
+            var doc = new HtmlDocument();
+
+            string html = GetUrlResouces(url);
+            var dic = Process.ParseQueryString(html);
+            if (dic.ContainsKey("player_response"))
+                return JObject.Parse(GetYoutubeDecodedUrl(dic["player_response"]));
+            else
+            {
+                // throw new Exception("");
+                url = "http://youtube.com/watch?v=" + VideoId;
+
+
+                doc.LoadHtml(html);
+
+                var scripts = doc.DocumentNode.SelectNodes("//script");
+                var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText;
+                var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
+                var bitis = innerText.IndexOf(";ytplayer.web_player_context_config") != -1
+                    ? innerText.IndexOf(";ytplayer.web_player_context_config")
+                    : innerText.IndexOf(";ytplayer.load");
+                var json = innerText.Substring(baslangic, bitis - baslangic);
+
+                return JObject.Parse(json);
+            }
         }
         private string GetUrlResouces(string url)
         {
