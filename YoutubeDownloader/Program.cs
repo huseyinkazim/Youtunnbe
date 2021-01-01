@@ -74,7 +74,7 @@ namespace YoutubeDownloader
                 {
                     Console.WriteLine("Lütfen indermek istediğiniz linki yapıştırın: ");
                     link = Console.ReadLine();
-                    //link = "https://www.youtube.com/watch?v=yCs6UmogKEg";
+                    //link = "https://www.youtube.com/watch?v=yCs6UmogKEg";//Sebastien Ros on Jint: A Javascript Interpreter for .NET
                     //link = "https://www.youtube.com/watch?v=seM8oqrU2qA";
                     //link = "https://www.youtube.com/watch?v=VfnefdC13w8";
                     //link = "https://www.youtube.com/watch?v=2a4Uxdy9TQY";
@@ -82,8 +82,8 @@ namespace YoutubeDownloader
                     //link = "https://www.youtube.com/watch?v=LWE79K2Ii-s";
                     //link = "https://www.youtube.com/watch?v=YQHsXMglC9A";
                     //link = "https://www.youtube.com/watch?v=7F--wQVviSI";
-                    link = "https://www.youtube.com/watch?v=YQHsXMglC9A";//Adele - Hello//todo:redirect değil orjinal url denenecek
-                   //link = "http://www.youtube.com/watch?v=MrTh-e_oU7A";//How to Download YouTube Videos Without Software
+                    //link = "https://www.youtube.com/watch?v=YQHsXMglC9A";//Adele - Hello//todo:redirect değil orjinal url denenecek
+                    //link = "http://www.youtube.com/watch?v=MrTh-e_oU7A";//How to Download YouTube Videos Without Software
 
                     IYoutubeManager manager = new YoutubeManager();
                     IEnumerable<VideoInfo> videoInfos = manager.YoutubeMediaUrls(link);

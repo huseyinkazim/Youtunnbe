@@ -101,8 +101,9 @@ namespace Business
             List<dynamic> videoDatas = new List<dynamic>();
 
             var response = json["streamingData"];
-
-            var formatToken = response["formats"];
+            if (response == null)
+                throw new Exception("Video bulunamadı");
+                var formatToken = response["formats"];
             var adaptiveFormatsToken = response["adaptiveFormats"];
 
             var formatDynamic = JsonConvert.DeserializeObject<dynamic>(formatToken.ToString());
@@ -200,6 +201,52 @@ namespace Business
             return liste;
 
         }
+        private string parantezackapabul(string longStory)
+        {
+            List<int> lastList = new List<int>(), firstList = new List<int>();
+            var first = longStory.IndexOf("(");
+            firstList.Add(first);
+            int temp = first;
+            while (true)
+            {
+                temp = longStory.IndexOf(")", temp + 1);
+
+                if (temp == -1)
+                    break;
+                lastList.Add(temp);
+            }
+            temp = first;
+            while (true)
+            {
+                temp = longStory.IndexOf("(", temp + 1);
+                if (temp == -1)
+                    break;
+
+                firstList.Add(temp);
+            }
+            int i = firstList.Count / 2, j = 0;
+            while (true)
+            {
+
+                if (i == 0)
+                    break;
+                if (firstList[i] > lastList[j])
+                {
+                    i--;
+                }
+                else if (i + 1 < firstList.Count && firstList[i + 1] < lastList[j])
+                {
+                    i++;
+                }
+                else
+                {
+                    firstList.RemoveAt(i);
+                    j++;
+                    i = firstList.Count / 2;
+                }
+            }
+            return longStory.Substring(0, lastList[j]).Substring(firstList[0] + 1);
+        }
         private string GetVideoBaseJsPath(string VideoId)
         {
             var url = "http://youtube.com/watch?v=" + VideoId;
@@ -209,16 +256,12 @@ namespace Business
 
             doc.LoadHtml(html);
 
-            var scripts = doc.DocumentNode.SelectNodes("//script");
-            var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText;
-            var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
-            var bitis = innerText.IndexOf(";ytplayer.web_player_context_config") != -1
-                ? innerText.IndexOf(";ytplayer.web_player_context_config")
-                : innerText.IndexOf(";ytplayer.load");
-            var json = innerText.Substring(baslangic, bitis - baslangic);
+            var scripts = doc.DocumentNode.SelectNodes("//script").Select(i => i.InnerHtml);
+            var innerText = scripts.FirstOrDefault(j => j.Replace(" ", string.Empty).Contains("player_ias.vflset"));
+            innerText = innerText.Substring(innerText.IndexOf("ytcfg.set"));
+            var json = parantezackapabul(innerText);
 
-             
-            JToken js = JObject.Parse(json)["assets"]["js"];
+            JToken js = JObject.Parse(json)["WEB_PLAYER_CONTEXT_CONFIGS"]["WEB_PLAYER_CONTEXT_CONFIG_ID_KEVLAR_WATCH"]["jsUrl"];
             return js == null ? String.Empty : js.ToString();
         }
         private string GetYoutubeDecodedUrl(string url)
