@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31005.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoutubeDownloader", "YoutubeDownloader\YoutubeDownloader.csproj", "{96A39CBF-863C-4480-BC64-BC04586923BF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entity", "Entity\Entity.csproj", "{BB5780D6-56A9-4B8D-BBE5-2852D8D26178}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Business", "Business\Business.csproj", "{33DEDFD5-ED9D-48D8-AE05-9A48E8DF5863}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Youtunnbe", "Youtunnbe\Youtunnbe.csproj", "{575A1AFC-3F06-4D07-AE20-B97FA9037524}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,8 +29,15 @@ Global
 		{33DEDFD5-ED9D-48D8-AE05-9A48E8DF5863}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33DEDFD5-ED9D-48D8-AE05-9A48E8DF5863}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33DEDFD5-ED9D-48D8-AE05-9A48E8DF5863}.Release|Any CPU.Build.0 = Release|Any CPU
+		{575A1AFC-3F06-4D07-AE20-B97FA9037524}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{575A1AFC-3F06-4D07-AE20-B97FA9037524}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{575A1AFC-3F06-4D07-AE20-B97FA9037524}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{575A1AFC-3F06-4D07-AE20-B97FA9037524}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6B0D5E6A-9FFA-4769-8BAD-FC3A08FB5758}
 	EndGlobalSection
 EndGlobal

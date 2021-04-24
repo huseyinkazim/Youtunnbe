@@ -40,7 +40,8 @@ namespace Business
             JObject json;
 
             json = LoadJson(VideoId);
-
+            if (json["playabilityStatus"]["status"].ToString() != "OK")
+                throw new Exception(json["playabilityStatus"].ToString());
             string jsPath = GetVideoBaseJsPath(VideoId);
 
             if (string.IsNullOrEmpty(jsPath))
@@ -103,7 +104,7 @@ namespace Business
             var response = json["streamingData"];
             if (response == null)
                 throw new Exception("Video bulunamadı");
-                var formatToken = response["formats"];
+            var formatToken = response["formats"];
             var adaptiveFormatsToken = response["adaptiveFormats"];
 
             var formatDynamic = JsonConvert.DeserializeObject<dynamic>(formatToken.ToString());
@@ -273,7 +274,7 @@ namespace Business
         {
             string url;
             url = $"https://www.youtube.com/get_video_info?video_id={VideoId}&eurl=https://youtube.googleapis.com/v/{VideoId}";
-
+            url= $"https://www.youtube.com/get_video_info?html5=1&video_id={VideoId}&cpn=Iw6bUR1Ue4pNPQkp&eurl&ps=desktop-polymer&el=adunit&hl=tr_TR&aqi=e5yEYNvfJ8a8rQG21bCQCQ&sts=18739&lact=3071&cbr=Chrome&cbrver=90.0.4430.85&c=WEB&cver=2.20210422.04.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&adformat=15_2_1&break_type=2&encoded_ad_playback_context=CA8QAhgBKgs4cXEwemxVT0twTUIWZTV5RVlOdmZKOGE4clFHMjFiQ1FDUWACdSPOfT-AAcjiAYoDKDABOAVKEwibiffl95fwAhVGXisKHbYqDJJSCRACGMDQ8QJIAmgBcCyQA_6G_6PUDQ%253D%253D&iv_load_policy=1&autoplay=1&width=853&height=480&content_v=8qq0zlUOKpM&authuser=0&living_room_app_mode=LIVING_ROOM_APP_MODE_UNSPECIFIED";
 
             var doc = new HtmlDocument();
 
