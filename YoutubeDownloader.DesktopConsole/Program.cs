@@ -1,13 +1,14 @@
-﻿using Business;
-using Entity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using YoutubeDownloader.Business;
+using YoutubeDownloader.Interface;
+using YoutubeDownloader.Model;
 
-namespace YoutubeDownloader
+namespace YoutubeDownloader.DesktopConsole
 {
     public class DownloadManager
     {
@@ -35,7 +36,7 @@ namespace YoutubeDownloader
         {
             Task.Run(() =>
             {
-                var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) , "Youtube");
+                var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Youtube");
 
                 if (!Directory.Exists(filePath))
                     Directory.CreateDirectory(filePath);
@@ -73,7 +74,7 @@ namespace YoutubeDownloader
                 try
                 {
                     Console.WriteLine("Lütfen indermek istediğiniz linki yapıştırın: ");
-                    link = Console.ReadLine();
+                    //link = Console.ReadLine();
                     //link = "https://www.youtube.com/watch?v=yCs6UmogKEg";//Sebastien Ros on Jint: A Javascript Interpreter for .NET
                     //link = "https://www.youtube.com/watch?v=seM8oqrU2qA";
                     //link = "https://www.youtube.com/watch?v=VfnefdC13w8";
@@ -82,13 +83,13 @@ namespace YoutubeDownloader
                     //link = "https://www.youtube.com/watch?v=LWE79K2Ii-s";
                     //link = "https://www.youtube.com/watch?v=YQHsXMglC9A";
                     //link = "https://www.youtube.com/watch?v=7F--wQVviSI";
-                    //link = "https://www.youtube.com/watch?v=YQHsXMglC9A";//Adele - Hello//todo:redirect değil orjinal url denenecek
+                    link = "https://www.youtube.com/watch?v=YQHsXMglC9A";//Adele - Hello//todo:redirect değil orjinal url denenecek
                     //link = "http://www.youtube.com/watch?v=MrTh-e_oU7A";//How to Download YouTube Videos Without Software
 
                     IYoutubeManager manager = new YoutubeManager();
                     IEnumerable<VideoInfo> videoInfos = manager.YoutubeMediaUrls(link);
 
-                    var choosenVideo=DownloadManager.ChooseVideo(videoInfos);
+                    var choosenVideo = DownloadManager.ChooseVideo(videoInfos);
                     DownloadManager.DownloadVideo(choosenVideo);
                     Console.WriteLine($"{videoInfos.FirstOrDefault().Title} adlı dosyanız indiriliyor.");
 
@@ -98,7 +99,7 @@ namespace YoutubeDownloader
                     Console.WriteLine("Beklenmedik bir hata oluştu lütfen bizimle iletişime geçiniz");
 
                 }
-            } while (true); 
+            } while (true);
         }
     }
 }

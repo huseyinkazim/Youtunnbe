@@ -1,20 +1,17 @@
-﻿using Entity;
-using HtmlAgilityPack;
-using Jurassic.Library;
+﻿using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Web;
+using YoutubeDownloader.Interface;
+using YoutubeDownloader.Model;
 
-namespace Business
+namespace YoutubeDownloader.Business
 {
     public class YoutubeManager : IYoutubeManager
     {
@@ -188,6 +185,7 @@ namespace Business
 
                 if (!queries.ContainsKey("ratebypass"))
                     url += string.Format("&{0}={1}", "ratebypass", "yes");
+                url = HttpUtility.HtmlDecode(HttpUtility.HtmlDecode(url));
 
                 videoInfo.DownloadUrl = url + $"&title={HttpUtility.UrlEncode(model.videoTitle)}";
                 videoInfo.Title = model.videoTitle;
@@ -274,7 +272,7 @@ namespace Business
         {
             string url;
             url = $"https://www.youtube.com/get_video_info?video_id={VideoId}&eurl=https://youtube.googleapis.com/v/{VideoId}";
-            url= $"https://www.youtube.com/get_video_info?html5=1&video_id={VideoId}&cpn=Iw6bUR1Ue4pNPQkp&eurl&ps=desktop-polymer&el=adunit&hl=tr_TR&aqi=e5yEYNvfJ8a8rQG21bCQCQ&sts=18739&lact=3071&cbr=Chrome&cbrver=90.0.4430.85&c=WEB&cver=2.20210422.04.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&adformat=15_2_1&break_type=2&encoded_ad_playback_context=CA8QAhgBKgs4cXEwemxVT0twTUIWZTV5RVlOdmZKOGE4clFHMjFiQ1FDUWACdSPOfT-AAcjiAYoDKDABOAVKEwibiffl95fwAhVGXisKHbYqDJJSCRACGMDQ8QJIAmgBcCyQA_6G_6PUDQ%253D%253D&iv_load_policy=1&autoplay=1&width=853&height=480&content_v=8qq0zlUOKpM&authuser=0&living_room_app_mode=LIVING_ROOM_APP_MODE_UNSPECIFIED";
+            url = $"https://www.youtube.com/get_video_info?html5=1&video_id={VideoId}&cpn=Iw6bUR1Ue4pNPQkp&eurl&ps=desktop-polymer&el=adunit&hl=tr_TR&aqi=e5yEYNvfJ8a8rQG21bCQCQ&sts=18739&lact=3071&cbr=Chrome&cbrver=90.0.4430.85&c=WEB&cver=2.20210422.04.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&adformat=15_2_1&break_type=2&encoded_ad_playback_context=CA8QAhgBKgs4cXEwemxVT0twTUIWZTV5RVlOdmZKOGE4clFHMjFiQ1FDUWACdSPOfT-AAcjiAYoDKDABOAVKEwibiffl95fwAhVGXisKHbYqDJJSCRACGMDQ8QJIAmgBcCyQA_6G_6PUDQ%253D%253D&iv_load_policy=1&autoplay=1&width=853&height=480&content_v=8qq0zlUOKpM&authuser=0&living_room_app_mode=LIVING_ROOM_APP_MODE_UNSPECIFIED";
 
             var doc = new HtmlDocument();
 
@@ -338,7 +336,4 @@ namespace Business
             return true;
         }
     }
-
-
-
 }

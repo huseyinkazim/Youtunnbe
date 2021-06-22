@@ -1,16 +1,10 @@
-﻿using Entity;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using YoutubeDownloader.Model;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Business
+namespace YoutubeDownloader.Interface
 {
     public interface IYoutubeManager
     {
          IEnumerable<VideoInfo> YoutubeMediaUrls(string YoutubeUrl);
-        
     }
 }

@@ -10,6 +10,7 @@ using System.Web.Mvc;
 using Youtunnbe.Helper;
 using Youtunnbe.Models;
 using Youtunnbe.Controllers.Base;
+using YoutubeDownloader.Entity;
 
 namespace Youtunnbe.Controllers
 {
@@ -23,7 +24,6 @@ namespace Youtunnbe.Controllers
         public HomeController(IYoutubeManager youtubeManager, IServiceManager serviceManager) :base(serviceManager)
         {
             this.manager = youtubeManager;
-
         }
 
         public async Task<ActionResult> Index()
@@ -41,7 +41,7 @@ namespace Youtunnbe.Controllers
         public ActionResult Index(string link)
         {
             Sayac.link = link;
-            IEnumerable<Entity.VideoInfo> videoInfos;
+            IEnumerable<VideoInfo> videoInfos;
             try
             {
                 videoInfos = manager.YoutubeMediaUrls(link);

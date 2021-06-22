@@ -1,25 +1,24 @@
-﻿using Entity;
+﻿using YoutubeDownloader.Interface;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Text;
+using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Linq;
 
-namespace Business
+namespace YoutubeDownloader.Business
 {
     public class Process : IProcess
     {
         public Dictionary<string, string> UrlToDictionaryParameters(string link, bool isContainsControl = true)
         {
-          
+
             if (link.Contains("?") && isContainsControl)
             {
                 link = link.Substring(link.IndexOf('?') + 1);
             }
             var dictionary = new Dictionary<string, string>();
-       
+
             foreach (var paremeter in link.Split('&', '?'))
             {
 
@@ -36,7 +35,7 @@ namespace Business
         {
             try
             {
-                string urlParameter=string.Empty;
+                string urlParameter = string.Empty;
                 var s1 = System.Web.HttpUtility.UrlDecode(link.Substring(link.IndexOf("url")));
                 var s2 = link.Substring(0, link.IndexOf("url"));
 
@@ -46,7 +45,7 @@ namespace Business
 
                 }
                 var dictionary = new Dictionary<string, string>();
-                dictionary.Add("url", s1.Substring(4, s1.IndexOf(urlParameter)-4));
+                dictionary.Add("url", s1.Substring(4, s1.IndexOf(urlParameter) - 4));
                 foreach (var paremeter in s2.Split('&', '?'))
                 {
                     if (paremeter == string.Empty)
@@ -69,9 +68,9 @@ namespace Business
                 }
                 return dictionary;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw new Exception("");
+                throw ;
 
             }
         }

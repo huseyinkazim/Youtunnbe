@@ -195,13 +195,9 @@
     <Folder Include="Views\Watch\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Business\Business.csproj">
-      <Project>{33dedfd5-ed9d-48d8-ae05-9a48e8df5863}</Project>
-      <Name>Business</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Entity\Entity.csproj">
-      <Project>{bb5780d6-56a9-4b8d-bbe5-2852d8d26178}</Project>
-      <Name>Entity</Name>
+    <ProjectReference Include="..\YoutubeDownloader.Model\YoutubeDownloader.Model.csproj">
+      <Project>{83b16dec-d1b0-4f4b-bf5b-5a16d075739c}</Project>
+      <Name>YoutubeDownloader.Model</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
