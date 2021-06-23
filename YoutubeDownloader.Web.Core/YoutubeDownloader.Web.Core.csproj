@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>80bcdabd-62d1-424e-b13f-5792c902e3de</UserSecretsId>
+    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\Content\bootstrap-theme.css" />
+    <None Include="wwwroot\Content\bootstrap-theme.min.css" />
+    <None Include="wwwroot\Content\bootstrap.css" />
+    <None Include="wwwroot\Content\bootstrap.min.css" />
+    <None Include="wwwroot\Content\Site.css" />
+    <None Include="wwwroot\Content\styles.2e89222d62d3f7f25702.css" />
+    <None Include="wwwroot\images\copy.png" />
+    <None Include="wwwroot\images\logo.jpg" />
+    <None Include="wwwroot\images\logo.png" />
+    <None Include="wwwroot\Scripts\bootstrap.js" />
+    <None Include="wwwroot\Scripts\jquery.js" />
+    <None Include="wwwroot\Scripts\qrCode.js" />
+    <None Include="wwwroot\Scripts\Site.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YoutubeDownloader.Business\YoutubeDownloader.Business.csproj" />
+    <ProjectReference Include="..\YoutubeDownloader.Interface\YoutubeDownloader.Interface.csproj" />
+    <ProjectReference Include="..\YoutubeDownloader.Model\YoutubeDownloader.Model.csproj" />
+  </ItemGroup>
+
+</Project>

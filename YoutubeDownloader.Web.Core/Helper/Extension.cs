@@ -1,17 +1,19 @@
-﻿using System;
-using System.Web.Mvc;
+﻿using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Web.Routing;
-using Youtunnbe.Models;
+using System.Linq;
 using System.Threading.Tasks;
-namespace Youtunnbe.Helper
+
+namespace YoutubeDownloader.Web.Core.Helper
 {
     public class LogActionFilter : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             Log("OnActionExecuting", filterContext.RouteData);
-           
+
         }
 
         public override void OnActionExecuted(ActionExecutedContext filterContext)

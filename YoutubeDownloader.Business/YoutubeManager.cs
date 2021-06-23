@@ -246,6 +246,52 @@ namespace YoutubeDownloader.Business
             }
             return longStory.Substring(0, lastList[j]).Substring(firstList[0] + 1);
         }
+        private string susluparantezackapabul(string longStory)
+        {
+            List<int> lastList = new List<int>(), firstList = new List<int>();
+            var first = longStory.IndexOf("{");
+            firstList.Add(first);
+            int temp = first;
+            while (true)
+            {
+                temp = longStory.IndexOf("}", temp + 1);
+
+                if (temp == -1)
+                    break;
+                lastList.Add(temp);
+            }
+            temp = first;
+            while (true)
+            {
+                temp = longStory.IndexOf("{", temp + 1);
+                if (temp == -1)
+                    break;
+
+                firstList.Add(temp);
+            }
+            int i = firstList.Count / 2, j = 0;
+            while (true)
+            {
+
+                if (i == 0)
+                    break;
+                if (firstList[i] > lastList[j])
+                {
+                    i--;
+                }
+                else if (i + 1 < firstList.Count && firstList[i + 1] < lastList[j])
+                {
+                    i++;
+                }
+                else
+                {
+                    firstList.RemoveAt(i);
+                    j++;
+                    i = firstList.Count / 2;
+                }
+            }
+            return longStory.Substring(0, lastList[j]).Substring(firstList[0] + 1);
+        }
         private string GetVideoBaseJsPath(string VideoId)
         {
             var url = "http://youtube.com/watch?v=" + VideoId;
@@ -273,14 +319,15 @@ namespace YoutubeDownloader.Business
             string url;
             url = $"https://www.youtube.com/get_video_info?video_id={VideoId}&eurl=https://youtube.googleapis.com/v/{VideoId}";
             url = $"https://www.youtube.com/get_video_info?html5=1&video_id={VideoId}&cpn=Iw6bUR1Ue4pNPQkp&eurl&ps=desktop-polymer&el=adunit&hl=tr_TR&aqi=e5yEYNvfJ8a8rQG21bCQCQ&sts=18739&lact=3071&cbr=Chrome&cbrver=90.0.4430.85&c=WEB&cver=2.20210422.04.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&adformat=15_2_1&break_type=2&encoded_ad_playback_context=CA8QAhgBKgs4cXEwemxVT0twTUIWZTV5RVlOdmZKOGE4clFHMjFiQ1FDUWACdSPOfT-AAcjiAYoDKDABOAVKEwibiffl95fwAhVGXisKHbYqDJJSCRACGMDQ8QJIAmgBcCyQA_6G_6PUDQ%253D%253D&iv_load_policy=1&autoplay=1&width=853&height=480&content_v=8qq0zlUOKpM&authuser=0&living_room_app_mode=LIVING_ROOM_APP_MODE_UNSPECIFIED";
+            url = "http://youtube.com/watch?v=" + VideoId;
 
             var doc = new HtmlDocument();
 
             string html = GetUrlResouces(url);
-            var dic = Process.ParseQueryString(html);
-            if (dic.ContainsKey("player_response"))
-                return JObject.Parse(GetYoutubeDecodedUrl(dic["player_response"]));
-            else
+            //var dic = Process.ParseQueryString(html);
+            //if (dic.ContainsKey("player_response"))
+            //    return JObject.Parse(GetYoutubeDecodedUrl(dic["player_response"]));
+            //else
             {
                 // throw new Exception("");
                 url = "http://youtube.com/watch?v=" + VideoId;
@@ -289,12 +336,15 @@ namespace YoutubeDownloader.Business
                 doc.LoadHtml(html);
 
                 var scripts = doc.DocumentNode.SelectNodes("//script");
-                var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText;
-                var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
-                var bitis = innerText.IndexOf(";ytplayer.web_player_context_config") != -1
-                    ? innerText.IndexOf(";ytplayer.web_player_context_config")
-                    : innerText.IndexOf(";ytplayer.load");
-                var json = innerText.Substring(baslangic, bitis - baslangic);
+                //var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytplayer.config=")).InnerText;
+                var innerText = scripts.FirstOrDefault(j => j.InnerHtml.Replace(" ", string.Empty).Contains("ytInitialPlayerResponse")).InnerText;
+                var json = "{" + susluparantezackapabul(innerText) + "}";
+
+                //var baslangic = innerText.IndexOf("ytplayer.config = ") + 18;
+                //var bitis = innerText.IndexOf(";ytplayer.web_player_context_config") != -1
+                //    ? innerText.IndexOf(";ytplayer.web_player_context_config")
+                //    : innerText.IndexOf(";ytplayer.load");
+                //var json = innerText.Substring(baslangic, bitis - baslangic);
 
                 return JObject.Parse(json);
             }

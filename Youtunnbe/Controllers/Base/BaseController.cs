@@ -6,6 +6,7 @@ using System.Net.Mail;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using YoutubeDownloader.Model;
 using Youtunnbe.Helper;
 using Youtunnbe.Models;
 
@@ -26,14 +27,14 @@ namespace Youtunnbe.Controllers.Base
             
             if (info.Model != null)
             {
-                var models = (List<Entity.VideoInfo>)info.Model;
+                var models = (List<VideoInfo>)info.Model;
                 //Sayac.RequestedIp = ;
                 SendMailAsync(models, serviceManager.TakeIpInfoAsync(Request.UserHostAddress).Result, 1);
             }
 
             base.OnActionExecuted(filterContext);
         }
-        private Task SendMailAsync(List<Entity.VideoInfo> models, string requestedIp, int sayi)
+        private Task SendMailAsync(List<VideoInfo> models, string requestedIp, int sayi)
         {
             return Task.Run(() =>
              {

@@ -195,6 +195,14 @@
     <Folder Include="Views\Watch\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\YoutubeDownloader.Business\YoutubeDownloader.Business.csproj">
+      <Project>{9a8b62c1-c417-4f1d-bce6-83be42d51812}</Project>
+      <Name>YoutubeDownloader.Business</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YoutubeDownloader.Interface\YoutubeDownloader.Interface.csproj">
+      <Project>{6e3ece0d-776c-43fa-b735-755900ce26ba}</Project>
+      <Name>YoutubeDownloader.Interface</Name>
+    </ProjectReference>
     <ProjectReference Include="..\YoutubeDownloader.Model\YoutubeDownloader.Model.csproj">
       <Project>{83b16dec-d1b0-4f4b-bf5b-5a16d075739c}</Project>
       <Name>YoutubeDownloader.Model</Name>

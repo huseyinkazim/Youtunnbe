@@ -5,6 +5,7 @@ using System.Text;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Web;
 
 namespace YoutubeDownloader.Business
 {
@@ -36,7 +37,7 @@ namespace YoutubeDownloader.Business
             try
             {
                 string urlParameter = string.Empty;
-                var s1 = System.Web.HttpUtility.UrlDecode(link.Substring(link.IndexOf("url")));
+                var s1 = HttpUtility.UrlDecode(link.Substring(link.IndexOf("url")));
                 var s2 = link.Substring(0, link.IndexOf("url"));
 
                 if (s1.Contains("?") && isContainsControl)
@@ -54,7 +55,7 @@ namespace YoutubeDownloader.Business
 
 
                     var parameters = paremeter.Split('=');
-                    dictionary.Add(parameters[0], paremeter.Substring(baslangic));
+                    dictionary.Add(parameters[0], HttpUtility.UrlDecode(HttpUtility.UrlDecode(paremeter.Substring(baslangic))));
                 }
                 foreach (var paremeter in urlParameter.Split('&', '?'))
                 {
@@ -64,13 +65,13 @@ namespace YoutubeDownloader.Business
 
                     var parameters = paremeter.Split('=');
 
-                    dictionary.Add(parameters[0], paremeter.Substring(baslangic));
+                    dictionary.Add(parameters[0], HttpUtility.UrlDecode(HttpUtility.UrlDecode(paremeter.Substring(baslangic))));
                 }
                 return dictionary;
             }
             catch (Exception ex)
             {
-                throw ;
+                throw;
 
             }
         }

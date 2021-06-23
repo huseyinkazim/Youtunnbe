@@ -1,0 +1,157 @@
+﻿@model IEnumerable<YoutubeDownloader.Model.VideoInfo>
+@using YoutubeDownloader.Entity.Enums;
+
+@{
+    var model = Model != null ? Model.FirstOrDefault() : null;
+
+    Dictionary<string, string> keyValues = new Dictionary<string, string>();
+    keyValues.Add("link", ViewBag.Link);
+}
+<style>
+    video {
+        width: 100%;
+    }
+
+    .embed-container {
+        position: relative;
+        padding-bottom: 23.25%;
+        /* padding-top: 30px; */
+        height: 0;
+        overflow: hidden;
+    }
+
+    @@media screen and (max-width: 768px) {
+        .embed-container {
+            position: relative;
+            padding-bottom: 55.25%;
+            /* padding-top: 30px; */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .jumbotron {
+            padding-bottom: 20px;
+        }
+    }
+
+    .embed-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+<div class="container screen2">
+    <div class="col-sm-12 subScreen">
+        <div class="col-sm-12">
+
+
+            @using (Html.BeginForm("Index", "Home", FormMethod.Post, new { @class = "sf-form link-form" }))
+            {
+                @Html.AntiForgeryToken()
+
+
+
+                <div class="l-box">
+                    <div class="tarea-wrap">
+                        <input type="text" id="link" name="link" value="@ViewBag.Link" autofocus="" placeholder="Video bağlantınızı buraya yapıştırın" onfocus="if(this.value &amp;&amp; this.select){this.select()}">
+                    </div>
+                </div>
+                <div class="r-box">
+                    <button type="submit" name="sf_submit" class="submit" id="sf_submit">İndir</button>
+                </div>
+            }
+            @if (Model != null)
+            {
+                <input id="title" hidden value="@Model.FirstOrDefault().Title" />
+                <h2>
+                    @Model.FirstOrDefault().Title
+
+                    <a id="ahref" data-toggle="tooltip" data-placement="top" onclick="copyToClipboard('#title')" title="Copy Title" onmouseout="outFunc()">
+
+                        <img width="25px" src="~/images/copy.png" />
+                    </a>
+                    <script>
+                        function copyToClipboard(element) {
+                            var $temp = $("<input>");
+                            $("body").append($temp);
+                            $temp.val($(element).val()).select();
+                            document.execCommand('copy');
+                            $temp.remove();
+                            $('#ahref').attr("data-original-title", "Coppied");
+
+                        }
+                        $(document).ready(function () {
+                            $('#ahref').tooltip();
+                        });
+
+                    </script>
+
+                </h2>
+
+                <div class="row">
+                    <div class="col-xs-6"><h3>Video</h3></div>
+                    <div class="col-xs-6"><h3>Audio</h3></div>
+
+                </div>
+                <div class="row">
+                    <div class="col-xs-6">
+                        <h5>
+                            @foreach (var item in Model)
+                            {
+                                if (item.AdaptiveType != AdaptiveType.Audio)
+                                {
+                                    @*<a download target="_blank" href="@item.DownloadUrl"> (@item.VideoType / @item.Resolution) </a>*@
+                                    <label>@item.VideoType / @item.Resolution</label>
+                                    <video style="width:100%" controls>
+                                        <source src="@item.DownloadUrl" type="video/mp4" />
+
+                                    </video>
+                                    <br />
+                                }
+                            }
+                        </h5>
+                    </div>
+                    <div class="col-xs-6">
+                        <h5>
+                            @foreach (var item in Model)
+                            {
+
+                                if (item.AdaptiveType == AdaptiveType.Audio)
+                                {
+                                    @*<a download target="_blank" href="@item.DownloadUrl">(@item.VideoType/Music)</a>*@
+                                    <label>@item.VideoType / Music</label>
+                                    <video style=" width: 100%; border: 3px solid #7d7575;" controls>
+                                        <source src="@item.DownloadUrl" type="audio/mp3" />
+
+                                    </video>
+                                    @*<a download target="_blank" href="@item.DownloadUrl">(@item.VideoType/Music)</a>*@
+                                    <br />
+                                    @*<div id="qrcode"></div>*@
+                                }
+                            }
+                        </h5>
+                    </div>
+                </div>
+
+            }
+        </div>
+        @if (model != null)
+        {
+            <div class="col-sm-12 embed-container">
+
+                <iframe data-src="https://www.youtube.com/embed/@Model.FirstOrDefault().YoutubeLinkId"
+                        frameborder="0" allowfullscreen></iframe>
+            </div>
+            @*<video width="320" height="240" controls download="@Model.FirstOrDefault().Title">
+                  <source src="@Model.FirstOrDefault(i=>i.AdaptiveType!=Entity.AdaptiveType.Audio).DownloadUrl" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>*@
+        }
+    </div>
+</div>
+
+<script>var link = "@ViewBag.Link"; @*var downloadMusicLink = "@ViewBag.DownloadLink";*@</script>
+<script src="~/Scripts/Site.js"></script>
