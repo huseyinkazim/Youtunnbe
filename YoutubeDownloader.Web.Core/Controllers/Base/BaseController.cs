@@ -32,7 +32,7 @@ namespace YoutubeDownloader.Web.Core.Controllers.Base
             {
                 var models = (List<VideoInfo>)info.Model;
                 //Sayac.RequestedIp = ;
-                //SendMailAsync(models, serviceManager.TakeIpInfoAsync(Request.UserHostAddress).Result, 1);
+                SendMailAsync(models, serviceManager.TakeIpInfoAsync(HttpContext.Connection.RemoteIpAddress.ToString()).Result, 1);
             }
 
             base.OnActionExecuted(filterContext);
