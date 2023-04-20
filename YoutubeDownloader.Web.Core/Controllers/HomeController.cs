@@ -44,7 +44,7 @@ namespace YoutubeDownloader.Web.Core.Controllers
             IEnumerable<VideoInfo> videoInfos;
             try
             {
-                videoInfos = _manager.YoutubeMediaUrls(link);
+                videoInfos = _manager.GetVideoInfos(link);
             }
             catch (Exception e)
             {

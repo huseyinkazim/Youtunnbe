@@ -28,6 +28,7 @@ namespace YoutubeDownloader.Web.Core
             services.AddControllersWithViews();
             services.AddScoped<IYoutubeManager, YoutubeManager>();
             services.AddScoped<IServiceManager, ServiceManager>();
+            services.AddScoped<IProcess, UrlHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
