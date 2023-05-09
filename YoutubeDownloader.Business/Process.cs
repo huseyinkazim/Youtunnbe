@@ -32,49 +32,49 @@ namespace YoutubeDownloader.Business
 	//		}
 	//		return dictionary;
 	//	}
- //       public Dictionary<string, string> UtubeUrlToDictionaryParameters(string link, bool isContainsControl = true)
- //       {
- //           try
- //           {
- //               string urlParameter = string.Empty;
- //               var s1 = HttpUtility.UrlDecode(link.Substring(link.IndexOf("url")));
- //               var s2 = link.Substring(0, link.IndexOf("url"));
+	//       public Dictionary<string, string> UtubeUrlToDictionaryParameters(string link, bool isContainsControl = true)
+	//       {
+	//           try
+	//           {
+	//               string urlParameter = string.Empty;
+	//               var s1 = HttpUtility.UrlDecode(link.Substring(link.IndexOf("url")));
+	//               var s2 = link.Substring(0, link.IndexOf("url"));
 
- //               if (s1.Contains("?") && isContainsControl)
- //               {
- //                   urlParameter = s1.Substring(s1.IndexOf('?') + 1);
+	//               if (s1.Contains("?") && isContainsControl)
+	//               {
+	//                   urlParameter = s1.Substring(s1.IndexOf('?') + 1);
 
- //               }
- //               var dictionary = new Dictionary<string, string>();
- //               dictionary.Add("url", s1.Substring(4, s1.IndexOf(urlParameter) - 4));
- //               foreach (var paremeter in s2.Split('&', '?'))
- //               {
- //                   if (paremeter == string.Empty)
- //                       continue;
- //                   var baslangic = paremeter.IndexOf("=") + 1;
-
-
- //                   var parameters = paremeter.Split('=');
- //                   dictionary.Add(parameters[0], HttpUtility.UrlDecode(HttpUtility.UrlDecode(paremeter.Substring(baslangic))));
- //               }
- //               foreach (var paremeter in urlParameter.Split('&', '?'))
- //               {
-
- //                   var baslangic = paremeter.IndexOf("=") + 1;
+	//               }
+	//               var dictionary = new Dictionary<string, string>();
+	//               dictionary.Add("url", s1.Substring(4, s1.IndexOf(urlParameter) - 4));
+	//               foreach (var paremeter in s2.Split('&', '?'))
+	//               {
+	//                   if (paremeter == string.Empty)
+	//                       continue;
+	//                   var baslangic = paremeter.IndexOf("=") + 1;
 
 
- //                   var parameters = paremeter.Split('=');
+	//                   var parameters = paremeter.Split('=');
+	//                   dictionary.Add(parameters[0], HttpUtility.UrlDecode(HttpUtility.UrlDecode(paremeter.Substring(baslangic))));
+	//               }
+	//               foreach (var paremeter in urlParameter.Split('&', '?'))
+	//               {
 
- //                   dictionary.Add(parameters[0], HttpUtility.UrlDecode(HttpUtility.UrlDecode(paremeter.Substring(baslangic))));
- //               }
- //               return dictionary;
- //           }
- //           catch (Exception ex)
- //           {
- //               throw;
+	//                   var baslangic = paremeter.IndexOf("=") + 1;
 
- //           }
- //       }
+
+	//                   var parameters = paremeter.Split('=');
+
+	//                   dictionary.Add(parameters[0], HttpUtility.UrlDecode(HttpUtility.UrlDecode(paremeter.Substring(baslangic))));
+	//               }
+	//               return dictionary;
+	//           }
+	//           catch (Exception ex)
+	//           {
+	//               throw;
+
+	//           }
+	//       }
 	//	private string GetUrlResouces(string url)
 	//	{
 	//		using (var client = new WebClient())
@@ -212,14 +212,25 @@ namespace YoutubeDownloader.Business
 
 	public class UrlHelper : IProcess
 	{
-		public Dictionary<string, string> ParseUrlToDictionary(string url, bool containsControl = true)
+		public Dictionary<string, string> ParseUrlToDictionary(string url, bool isSignature = false, bool containsControl = true)
 		{
 			var dictionary = new Dictionary<string, string>();
 
 			try
 			{
-				Uri uri = new Uri(url);
-				string query = uri.Query.TrimStart('?');
+				Uri uri;
+				string query;
+				if (isSignature)
+				{
+					var s1 = HttpUtility.UrlDecode(url.Substring(url.IndexOf("url") + 4));
+					var s2 = url.Substring(0, url.IndexOf("url"));
+					uri = new Uri(s1);
+					query = s2+uri.Query.TrimStart('?');
+				}
+				else {
+					uri = new Uri(url);
+					query = uri.Query.TrimStart('?'); 
+				}
 				string fragment = uri.Fragment.TrimStart('#');
 
 				AddKeyValuePairsToDictionary(dictionary, query);
