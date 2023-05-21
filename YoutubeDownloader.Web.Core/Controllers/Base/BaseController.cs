@@ -77,8 +77,7 @@ namespace YoutubeDownloader.Web.Core.Controllers.Base
                 }
                 finally
                 {
-                    //Sayac.RequestedIp = string.Empty;
-                    //Sayac.link = string.Empty;
+                   
                 }
             });
 

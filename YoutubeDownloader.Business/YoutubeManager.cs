@@ -34,10 +34,10 @@ namespace YoutubeDownloader.Business
 			if (youtubeUrl == null)
 				throw new ArgumentNullException(nameof(youtubeUrl));
 
-			if (!TryNormalizeYoutubeUrl(youtubeUrl, out string videoId))
+			if (!tryNormalizeYoutubeUrl(youtubeUrl, out string videoId))
 				throw new ArgumentException("URL is not a valid youtube URL!", nameof(youtubeUrl));
 
-			var tuple = LoadJson(videoId);
+			var tuple = loadJson(videoId);
 			var json = tuple.Item1;
 			var jsPath = tuple.Item2;
 			if (json["playabilityStatus"]["status"].ToString() != "OK")
@@ -48,7 +48,7 @@ namespace YoutubeDownloader.Business
 			if (string.IsNullOrEmpty(jsPath))
 				throw new Exception("JsPath bulunamadı");
 
-			var videoDatas = GetVideoDatas(json);
+			var videoDatas = getVideoDatas(json);
 
 			var splitByUrls = videoDatas
 				.Select(model => model.signatureCipher != null ? model.signatureCipher.ToString() : model.url.ToString())
@@ -56,57 +56,22 @@ namespace YoutubeDownloader.Business
 
 			var parameter = new
 			{
-				videoTitle = GetVideoTitle(json),
+				videoTitle = getVideoTitle(json),
 				splitByUrls = splitByUrls.ToArray(),
 				youtubeLinkId = videoId,
 				isSignature = videoDatas[0].signatureCipher != null,
 				jsPath = jsPath
 			};
 
-			return GetDownloadUrls(parameter);
+			return getDownloadUrls(parameter);
 		}
 
-		private string GetVideoTitle(JObject json)
+		private string getVideoTitle(JObject json)
 		{
 			var videoTitle = json["videoDetails"]["title"].ToString();
-			return RemoveInvalidChars(string.IsNullOrEmpty(videoTitle) ? "videoPlayback" : videoTitle);
+			return removeInvalidChars(string.IsNullOrEmpty(videoTitle) ? "videoPlayback" : videoTitle);
 		}
-
-		private string RemoveInvalidChars(string value)
-		{
-			return string.Concat(TurkishChrToEnglishChr(value).Split(Path.GetInvalidFileNameChars()));
-		}
-		public string TurkishChrToEnglishChr(string text)
-		{
-			if (string.IsNullOrEmpty(text)) return text;
-
-			Dictionary<char, char> TurkishChToEnglishChDic = new Dictionary<char, char>()
-		{
-			{'ç','c'},
-			{'Ç','C'},
-			{'ğ','g'},
-			{'Ğ','G'},
-			{'ı','i'},
-			{'İ','I'},
-			{'ş','s'},
-			{'Ş','S'},
-			{'ö','o'},
-			{'Ö','O'},
-			{'ü','u'},
-			{'Ü','U'}
-		};
-
-			return text.Aggregate(new StringBuilder(), (sb, chr) =>
-			{
-				if (TurkishChToEnglishChDic.ContainsKey(chr))
-					sb.Append(TurkishChToEnglishChDic[chr]);
-				else
-					sb.Append(chr);
-
-				return sb;
-			}).ToString();
-		}
-		private List<dynamic> GetVideoDatas(JObject json)
+		private List<dynamic> getVideoDatas(JObject json)
 		{
 			var videoDatas = new List<dynamic>();
 
@@ -121,8 +86,7 @@ namespace YoutubeDownloader.Business
 
 			return videoDatas;
 		}
-
-		private IEnumerable<VideoInfo> GetDownloadUrls(dynamic model)
+		private IEnumerable<VideoInfo> getDownloadUrls(dynamic model)
 		{
 			var urls = new List<VideoInfo>();
 
@@ -191,8 +155,7 @@ namespace YoutubeDownloader.Business
 
 			return urls;
 		}
-
-		private bool TryNormalizeYoutubeUrl(string videoUrl, out string videoId)
+		private bool tryNormalizeYoutubeUrl(string videoUrl, out string videoId)
 		{
 			videoId = null;
 			if (string.IsNullOrEmpty(videoUrl))
@@ -229,33 +192,7 @@ namespace YoutubeDownloader.Business
 
 			return false;
 		}
-
-		private string GetVideoBaseJsPath(string videoId)
-		{
-			var jsUrl = "http://youtube.com/watch?v=" + videoId;
-			var doc = new HtmlDocument();
-			using (HttpClient client = new HttpClient())
-			{
-				client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.5");
-				HttpResponseMessage response = client.GetAsync(jsUrl).Result;
-				if (response.IsSuccessStatusCode)
-				{
-					string html = response.Content.ReadAsStringAsync().Result;
-					doc.LoadHtml(html);
-
-					var scripts = doc.DocumentNode.SelectNodes("//script").Select(i => i.InnerHtml);
-					var innerText = scripts.FirstOrDefault(j => j.Replace(" ", string.Empty).Contains("player_ias.vflset"));
-					innerText = innerText.Substring(innerText.IndexOf("ytcfg.set"));
-					var json = parantezAcKapaBul(innerText);
-
-					JToken js = JObject.Parse(json)["WEB_PLAYER_CONTEXT_CONFIGS"]["WEB_PLAYER_CONTEXT_CONFIG_ID_KEVLAR_WATCH"]["jsUrl"];
-					return js == null ? String.Empty : js.ToString();
-				}
-			}
-			return string.Empty;
-		}
-
-		private Tuple<JObject, string> LoadJson(string videoId)
+		private Tuple<JObject, string> loadJson(string videoId)
 		{
 			var url = "http://youtube.com/watch?v=" + videoId;
 			var doc = new HtmlDocument();
@@ -379,7 +316,39 @@ namespace YoutubeDownloader.Business
 			}
 			return longStory.Substring(0, lastList[j]).Substring(firstList[0] + 1);
 		}
-	}
+		private string removeInvalidChars(string value)
+		{
+			return string.Concat(turkishChrToEnglishChr(value).Split(Path.GetInvalidFileNameChars()));
+		}
+		private string turkishChrToEnglishChr(string text)
+		{
+			if (string.IsNullOrEmpty(text)) return text;
 
-	
+			Dictionary<char, char> TurkishChToEnglishChDic = new Dictionary<char, char>()
+		{
+			{'ç','c'},
+			{'Ç','C'},
+			{'ğ','g'},
+			{'Ğ','G'},
+			{'ı','i'},
+			{'İ','I'},
+			{'ş','s'},
+			{'Ş','S'},
+			{'ö','o'},
+			{'Ö','O'},
+			{'ü','u'},
+			{'Ü','U'}
+		};
+
+			return text.Aggregate(new StringBuilder(), (sb, chr) =>
+			{
+				if (TurkishChToEnglishChDic.ContainsKey(chr))
+					sb.Append(TurkishChToEnglishChDic[chr]);
+				else
+					sb.Append(chr);
+
+				return sb;
+			}).ToString();
+		}
+	}
 }
